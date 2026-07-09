@@ -1,0 +1,49 @@
+name: Bug report
+description: Something in Glance isn't working correctly
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the notch
+        2. Swipe to Pomodoro
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: e.g. macOS 15.5
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: Mac model / display setup
+      placeholder: e.g. MacBook Pro 14" M3, external display connected
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Glance version
+      placeholder: e.g. 0.1.0
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: |
+        `log show --predicate 'subsystem == "app.glance.Glance"' --last 10m`
+        Please remove anything you consider private before posting.

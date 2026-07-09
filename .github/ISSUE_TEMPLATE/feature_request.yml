@@ -1,0 +1,23 @@
+name: Feature request
+description: Suggest an idea for Glance
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: |
+        Keep Glance's core principle in mind: the notch is a scarce attention
+        surface — every activity must earn the right to appear.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

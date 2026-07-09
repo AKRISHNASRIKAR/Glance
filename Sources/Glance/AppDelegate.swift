@@ -1,0 +1,51 @@
+import AppKit
+import GlanceKit
+
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    private var coordinator: AppCoordinator!
+    private var notchWindow: NotchWindowController!
+    private var settingsWindow: SettingsWindowController!
+    private var statusItem: NSStatusItem?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        GlanceLog.application.info("Glance starting")
+        coordinator = AppCoordinator()
+        notchWindow = NotchWindowController(coordinator: coordinator)
+        settingsWindow = SettingsWindowController(coordinator: coordinator)
+        notchWindow.start()
+        installStatusItem()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        notchWindow.stop()
+        coordinator.shutdown()
+    }
+
+    // MARK: Status item (the discoverable entry point for an accessory app)
+
+    private func installStatusItem() {
+        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        item.button?.image = NSImage(
+            systemSymbolName: "sparkle",
+            accessibilityDescription: "Glance"
+        )
+
+        let menu = NSMenu()
+        menu.addItem(withTitle: "Open Notch", action: #selector(toggleNotch), keyEquivalent: "").target = self
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",").target = self
+        menu.addItem(.separator())
+        menu.addItem(withTitle: "Quit Glance", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        item.menu = menu
+        statusItem = item
+    }
+
+    @objc private func toggleNotch() {
+        notchWindow.toggleExpanded()
+    }
+
+    @objc private func openSettings() {
+        settingsWindow.show()
+    }
+}
