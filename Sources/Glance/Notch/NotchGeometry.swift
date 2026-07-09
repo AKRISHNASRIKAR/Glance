@@ -10,7 +10,7 @@ struct NotchGeometry: Equatable {
     /// Sizing for each visual state, all anchored to the top-center.
     var idleSize: CGSize { notchRect.size }
 
-    func liveSize(wing: CGFloat = 56) -> CGSize {
+    func liveSize(wing: CGFloat = 64) -> CGSize {
         CGSize(width: notchRect.width + wing * 2, height: notchRect.height)
     }
 
@@ -18,14 +18,18 @@ struct NotchGeometry: Equatable {
         CGSize(width: notchRect.width + wing * 2, height: notchRect.height)
     }
 
-    static let expandedSize = CGSize(width: 620, height: 205)
+    /// Compact expanded surface (boring.notch-sized): content lives below
+    /// the physical notch row, so total height = notch height + content.
+    var expandedSize: CGSize {
+        CGSize(width: max(notchRect.width + 145 * 2, 480), height: notchRect.height + 128)
+    }
 
     /// The window frame: a fixed region around the notch large enough for
     /// the expanded state. The window never resizes; the visible shape
     /// animates inside it (this avoids window-resize jank entirely).
     var windowFrame: CGRect {
-        let width = max(Self.expandedSize.width, notchRect.width) + 80
-        let height = Self.expandedSize.height + notchRect.height + 40
+        let width = max(expandedSize.width, notchRect.width) + 80
+        let height = expandedSize.height + 40
         return CGRect(
             x: notchRect.midX - width / 2,
             y: notchRect.maxY - height,

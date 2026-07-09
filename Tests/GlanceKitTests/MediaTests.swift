@@ -128,9 +128,11 @@ struct NowPlayingArbitrationTests {
         let kind: MediaSourceKind
         var onStateChange: (@MainActor (MediaState?) -> Void)?
         var performed: [MediaCommand] = []
+        var refreshCount = 0
         init(kind: MediaSourceKind) { self.kind = kind }
         func start() {}
         func stop() {}
+        func refreshNowPlaying() { refreshCount += 1 }
         func perform(_ command: MediaCommand) { performed.append(command) }
         func fetchPosition() async -> TimeInterval? { nil }
         func fetchArtwork(for state: MediaState) async -> Data? { nil }
@@ -168,5 +170,18 @@ struct NowPlayingArbitrationTests {
         #expect(emitted.count == 1)
         #expect(emitted.first?.priority == .passive)
         #expect(emitted.first?.title == "Second")
+    }
+
+    @Test func startupRetriesSnapshotUntilStateIsKnown() {
+        let clock = TestClock()
+        let music = FakeSource(kind: .appleMusic)
+        let provider = NowPlayingProvider(sources: [music], scheduler: clock, timeSource: clock)
+        provider.start()
+        clock.advance(by: 8) // first two retries fire while state is unknown
+        #expect(music.refreshCount == 2)
+        // Once a state arrives, remaining retries stop.
+        music.onStateChange?(MediaState(title: "Song", playbackState: .playing, source: .appleMusic))
+        clock.advance(by: 30)
+        #expect(music.refreshCount == 2)
     }
 }

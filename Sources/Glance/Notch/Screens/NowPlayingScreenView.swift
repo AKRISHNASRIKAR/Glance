@@ -10,12 +10,11 @@ struct NowPlayingScreenView: View {
     @EnvironmentObject var settings: SettingsStore
     @EnvironmentObject var viewModel: NotchViewModel
 
+    // Artwork-appearance background is rendered by NotchRootView across the
+    // whole shape; this view is content only.
     var body: some View {
         let config = settings.settings.nowPlaying
-        ZStack {
-            if config.appearance == .artwork {
-                ArtworkBackgroundView(config: config)
-            }
+        Group {
             if let state = nowPlaying.state {
                 playerContent(state: state, config: config)
             } else {
@@ -27,15 +26,15 @@ struct NowPlayingScreenView: View {
     // MARK: Empty
 
     private var emptyState: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             Image(systemName: "music.note")
-                .font(.system(size: 22, weight: .medium))
+                .font(.system(size: 18, weight: .medium))
                 .foregroundStyle(.white.opacity(0.4))
             Text("Nothing playing")
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.white.opacity(0.55))
             Text("Play something in Music or Spotify")
-                .font(.system(size: 11))
+                .font(.system(size: 10))
                 .foregroundStyle(.white.opacity(0.35))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -45,35 +44,36 @@ struct NowPlayingScreenView: View {
     // MARK: Player
 
     private func playerContent(state: MediaState, config: NowPlayingSettings) -> some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 13) {
             if config.showAlbumArtwork {
                 LargeArtworkView(artworkID: state.artworkID)
             }
-            VStack(alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(state.title)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.white)
                     .lineLimit(1)
                 if let artist = state.artist {
                     Text(artist)
-                        .font(.system(size: 12))
+                        .font(.system(size: 11))
                         .foregroundStyle(.white.opacity(0.6))
                         .lineLimit(1)
                 }
 
-                Spacer(minLength: 4)
+                Spacer(minLength: 2)
 
                 controls(state: state, config: config)
 
                 if config.showPlaybackProgress {
                     PlaybackProgressView(state: state)
-                        .padding(.top, 2)
+                        .padding(.top, 1)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.horizontal, 22)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 18)
+        .padding(.top, 2)
+        .padding(.bottom, 12)
     }
 
     private func controls(state: MediaState, config: NowPlayingSettings) -> some View {
@@ -128,8 +128,8 @@ private struct LargeArtworkView: View {
                     .foregroundStyle(.white.opacity(0.3))
             }
         }
-        .frame(width: 108, height: 108)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .frame(width: 82, height: 82)
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .animation(viewModel.reduceMotion ? nil : .easeInOut(duration: 0.45), value: artworkID)
         .accessibilityLabel("Album artwork")
     }

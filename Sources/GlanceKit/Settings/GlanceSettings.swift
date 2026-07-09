@@ -109,7 +109,8 @@ public struct PomodoroSettings: Codable, Equatable, Sendable {
     public var focusDuration: TimeInterval = 25 * 60
     public var shortBreakDuration: TimeInterval = 5 * 60
     public var longBreakDuration: TimeInterval = 15 * 60
-    public var sessionsBeforeLongBreak: Int = 4
+    /// Default cycle: focus → short break → focus → long break.
+    public var sessionsBeforeLongBreak: Int = 2
     public var autoStartBreak: Bool = false
     public var autoStartFocus: Bool = false
     public var soundEnabled: Bool = true

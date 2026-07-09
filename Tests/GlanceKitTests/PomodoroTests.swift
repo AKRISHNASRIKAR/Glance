@@ -99,6 +99,33 @@ struct PomodoroTests {
         #expect(engine.runState == .idle)
     }
 
+    @Test func defaultCycleIsFocusShortFocusLong() {
+        // Default sessionsBeforeLongBreak is 2: focus → short → focus → long.
+        let (engine, clock) = makeEngine { $0.autoStartBreak = true; $0.autoStartFocus = true }
+        engine.start()
+        clock.advance(by: 25 * 60 + 2)
+        #expect(engine.phase == .shortBreak)
+        clock.advance(by: 5 * 60 + 2)
+        #expect(engine.phase == .focus)
+        clock.advance(by: 25 * 60 + 2)
+        #expect(engine.phase == .longBreak)
+    }
+
+    @Test func selectPhaseWhileIdleSwitchesBetweenFocusAndBreak() {
+        let (engine, clock) = makeEngine()
+        engine.selectPhase(.shortBreak)
+        #expect(engine.phase == .shortBreak)
+        #expect(engine.remaining == 5 * 60)
+        engine.selectPhase(.focus)
+        #expect(engine.phase == .focus)
+        #expect(engine.remaining == 25 * 60)
+        // Selection is ignored while running.
+        engine.start()
+        clock.advance(by: 60)
+        engine.selectPhase(.shortBreak)
+        #expect(engine.phase == .focus)
+    }
+
     @Test func configurationChangeAppliesWhenIdle() {
         let (engine, _) = makeEngine()
         var config = PomodoroSettings()

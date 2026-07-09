@@ -30,22 +30,35 @@ public enum ScreenType: String, Codable, CaseIterable, Sendable {
     }
 }
 
+/// How much of the expanded notch a Screen occupies. Two consecutive
+/// half-width Screens share one page (left / right).
+public enum ScreenWidth: String, Codable, Sendable {
+    case full
+    case half
+}
+
 /// One configured Screen in the horizontal pager.
 /// Position is the index within `ScreenStore.screens`.
 public struct NotchScreen: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID
     public var type: ScreenType
     public var isEnabled: Bool
+    public var width: ScreenWidth
 
-    public init(id: UUID = UUID(), type: ScreenType, isEnabled: Bool = true) {
+    public init(id: UUID = UUID(), type: ScreenType, isEnabled: Bool = true, width: ScreenWidth = .full) {
         self.id = id
         self.type = type
         self.isEnabled = isEnabled
+        self.width = width
     }
 
-    /// Tolerant decoding: a screen persisted by a future version with an
-    /// unknown type decodes as nil and is filtered out by the store.
-    public static func decodeTolerantly(from decoder: Decoder) -> NotchScreen? {
-        try? NotchScreen(from: decoder)
+    /// Tolerant decoding: settings written before `width` existed default to
+    /// full-width; a future unknown type fails decode and is filtered out.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        type = try c.decode(ScreenType.self, forKey: .type)
+        isEnabled = try c.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? true
+        width = try c.decodeIfPresent(ScreenWidth.self, forKey: .width) ?? .full
     }
 }

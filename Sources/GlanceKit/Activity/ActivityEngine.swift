@@ -19,7 +19,11 @@ public final class ActivityEngine: ObservableObject {
 
     private var providers: [String: any ActivityProvider] = [:]
     private var enablement: [String: (GlanceSettings) -> Bool] = [:]
+    private var displayNames: [String: String] = [:]
     private var running: Set<String> = []
+    /// Set once app launch wiring is done, so enable-confirmations only fire
+    /// for user-initiated toggles, never at startup.
+    private var launchComplete = false
     private let settings: SettingsStore
     private var cancellable: AnyCancellable?
     private var statusPoll: GlanceCancellable?
@@ -35,10 +39,13 @@ public final class ActivityEngine: ObservableObject {
     }
 
     /// Register a provider with the predicate that decides whether it should
-    /// run for a given settings value.
-    public func register(_ provider: any ActivityProvider, enabledWhen: @escaping (GlanceSettings) -> Bool) {
+    /// run for a given settings value. Providers with a `displayName` get a
+    /// brief confirmation peek when the user enables them, so toggling an
+    /// activity always has visible feedback.
+    public func register(_ provider: any ActivityProvider, displayName: String? = nil, enabledWhen: @escaping (GlanceSettings) -> Bool) {
         providers[provider.id] = provider
         enablement[provider.id] = enabledWhen
+        displayNames[provider.id] = displayName
         let providerID = provider.id
         provider.emitInterruption = { [weak self] interruption in
             self?.interruptions.present(interruption)
@@ -50,6 +57,12 @@ public final class ActivityEngine: ObservableObject {
     }
 
     public func provider(id: String) -> (any ActivityProvider)? { providers[id] }
+
+    /// Call once the app finishes launch wiring; from then on, enabling a
+    /// provider shows a confirmation peek.
+    public func markLaunchComplete() {
+        launchComplete = true
+    }
 
     public func stopAll() {
         for id in running { stopProvider(id) }
@@ -75,6 +88,17 @@ public final class ActivityEngine: ObservableObject {
         running.insert(provider.id)
         provider.start()
         refreshStatuses()
+        if launchComplete, let name = displayNames[provider.id], provider.status.isRunning {
+            interruptions.present(NotchInterruption(
+                provider: provider.id,
+                kind: "provider-enabled",
+                title: "\(name) enabled",
+                subtitle: "Events will appear when they matter",
+                symbolName: "checkmark.circle",
+                priority: .normal,
+                displayDuration: 2.5
+            ))
+        }
     }
 
     private func stopProvider(_ id: String) {

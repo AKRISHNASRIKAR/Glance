@@ -109,6 +109,14 @@ public final class PomodoroEngine: ObservableObject {
         remaining = duration(of: .focus)
     }
 
+    /// Manually choose the phase while idle (the Focus / Break selector on
+    /// the Pomodoro screen). Selecting a phase never starts it.
+    public func selectPhase(_ newPhase: PomodoroPhase) {
+        guard runState == .idle else { return }
+        phase = newPhase
+        remaining = duration(of: newPhase)
+    }
+
     /// Skip the current break and return to an idle focus phase (or start it
     /// if auto-start focus is on).
     public func skipBreak() {

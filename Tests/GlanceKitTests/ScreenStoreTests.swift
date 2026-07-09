@@ -106,6 +106,60 @@ struct ScreenStoreTests {
         #expect(store.selectedScreen?.type == .pomodoro)
     }
 
+    @Test func halfWidthScreensPairIntoOnePage() {
+        let a = NotchScreen(type: .codingContext, width: .half)
+        let b = NotchScreen(type: .pomodoro, width: .half)
+        let c = NotchScreen(type: .nowPlaying, width: .full)
+        let pages = ScreenStore.pages(for: [c, a, b])
+        #expect(pages.count == 2)
+        #expect(pages[0].map(\.type) == [.nowPlaying])
+        #expect(pages[1].map(\.type) == [.codingContext, .pomodoro])
+    }
+
+    @Test func unpairedHalfScreenGetsItsOwnPage() {
+        let a = NotchScreen(type: .nowPlaying, width: .half)
+        let b = NotchScreen(type: .pomodoro, width: .full)
+        let pages = ScreenStore.pages(for: [a, b])
+        #expect(pages.count == 2)
+        #expect(pages[0].map(\.type) == [.nowPlaying])
+    }
+
+    @Test func navigationMovesByPageAcrossHalfPairs() {
+        let (settings, _) = makeTestSettingsStore()
+        let store = ScreenStore(settings: settings)
+        store.addScreen(type: .claudeCode) // requires provider gating only in UI
+        // Make pomodoro + claude a half/half pair on page 2.
+        let pomodoro = store.screens.first { $0.type == .pomodoro }!
+        let claude = store.screens.first { $0.type == .claudeCode }!
+        store.setScreenWidth(id: pomodoro.id, width: .half)
+        store.setScreenWidth(id: claude.id, width: .half)
+        #expect(store.pages.count == 2)
+        store.navigate(by: 1)
+        #expect(store.selectedPageIndex == 1)
+        #expect(store.selectedPageContains(.pomodoro))
+        #expect(store.selectedPageContains(.claudeCode))
+        store.navigate(by: 1) // clamped
+        #expect(store.selectedPageIndex == 1)
+    }
+
+    @Test func screenWidthPersistsAndOldSettingsDecodeAsFull() throws {
+        let clock = TestClock()
+        let (settings, url) = makeTestSettingsStore(clock: clock)
+        let store = ScreenStore(settings: settings)
+        store.setScreenWidth(id: store.screens[0].id, width: .half)
+        settings.saveNow()
+        let reloaded = SettingsStore(fileURL: url, scheduler: clock)
+        #expect(reloaded.settings.screens[0].width == .half)
+        #expect(reloaded.settings.screens[1].width == .full)
+
+        // A pre-width settings file (no "width" key) decodes as full.
+        let legacy = #"{"schemaVersion":1,"screens":[{"id":"6F1B0F0A-2222-4444-8888-ABCDEFABCDEF","type":"nowPlaying","isEnabled":true}]}"#
+        let legacyURL = makeTempDirectory().appendingPathComponent("settings.json")
+        try Data(legacy.utf8).write(to: legacyURL)
+        let migrated = SettingsStore(fileURL: legacyURL, scheduler: clock)
+        #expect(migrated.settings.screens.first?.width == .full)
+    }
+
     @Test func disablingProviderRemovesItsScreens() {
         let (settings, _) = makeTestSettingsStore()
         let store = ScreenStore(settings: settings)

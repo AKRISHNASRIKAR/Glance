@@ -50,6 +50,22 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
     public func start() {
         status = .running
         sources.forEach { $0.start() }
+        // The launch snapshot can race the Automation permission prompt or a
+        // still-starting player; retry a few times until we know a state.
+        scheduleSnapshotRetry(attempt: 0)
+    }
+
+    private var snapshotRetryHandle: GlanceCancellable?
+
+    private func scheduleSnapshotRetry(attempt: Int) {
+        let delays: [TimeInterval] = [2, 5, 12]
+        guard attempt < delays.count else { return }
+        snapshotRetryHandle?.cancel()
+        snapshotRetryHandle = scheduler.schedule(after: delays[attempt]) { [weak self] in
+            guard let self, self.status.isRunning, self.state == nil else { return }
+            self.sources.forEach { $0.refreshNowPlaying() }
+            self.scheduleSnapshotRetry(attempt: attempt + 1)
+        }
     }
 
     public func stop() {
@@ -61,6 +77,8 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
         artworkTask?.cancel()
         positionPollHandle?.cancel()
         positionPollHandle = nil
+        snapshotRetryHandle?.cancel()
+        snapshotRetryHandle = nil
         status = .disabled
     }
 
@@ -165,7 +183,13 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
     public func setDetailVisible(_ visible: Bool) {
         detailVisible = visible
         updatePositionPolling()
-        if visible { samplePositionNow() }
+        if visible {
+            if state == nil {
+                // Opening the screen with no known state: ask the players.
+                sources.forEach { $0.refreshNowPlaying() }
+            }
+            samplePositionNow()
+        }
     }
 
     private func updatePositionPolling() {

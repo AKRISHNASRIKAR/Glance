@@ -150,10 +150,7 @@ final class NotchWindowController {
         // Horizontal two-finger swipe / horizontal scroll → screen paging.
         scrollMonitor = NSEvent.addLocalMonitorForEvents(matching: .scrollWheel) { [weak self] event in
             guard let self, let panel = self.panel, event.window === panel else { return event }
-            self.viewModel?.handleScroll(deltaX: event.scrollingDeltaX)
-            if event.phase == .ended || event.momentumPhase == .ended {
-                self.viewModel?.scrollGestureEnded()
-            }
+            self.viewModel?.handleScroll(event: event)
             return event
         }
         // Click anywhere outside the panel collapses the expanded notch.

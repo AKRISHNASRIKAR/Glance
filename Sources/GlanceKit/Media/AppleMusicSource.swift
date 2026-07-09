@@ -31,6 +31,11 @@ public final class AppleMusicSource: MediaSource {
             }
         }
         // Initial snapshot in case music is already playing.
+        refreshNowPlaying()
+    }
+
+    public func refreshNowPlaying() {
+        snapshotTask?.cancel()
         snapshotTask = Task { [weak self] in
             await self?.loadInitialSnapshot()
         }

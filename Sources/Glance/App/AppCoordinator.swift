@@ -40,14 +40,15 @@ final class AppCoordinator: ObservableObject {
 
         activity.register(nowPlaying) { $0.nowPlaying.isEnabled }
         activity.register(pomodoro) { _ in true } // Pomodoro is a core Screen.
-        activity.register(battery) { $0.battery.isEnabled }
-        activity.register(network) { $0.network.isEnabled }
-        activity.register(context) { $0.context.isEnabled }
-        activity.register(codingContext) { $0.codingContext.isEnabled }
-        activity.register(claudeCode) { $0.claudeCode.isEnabled }
+        activity.register(battery, displayName: "Battery & Charging") { $0.battery.isEnabled }
+        activity.register(network, displayName: "Network Activity") { $0.network.isEnabled }
+        activity.register(context, displayName: "Context Awareness") { $0.context.isEnabled }
+        activity.register(codingContext, displayName: "Coding Activity") { $0.codingContext.isEnabled }
+        activity.register(claudeCode, displayName: "Claude Code") { $0.claudeCode.isEnabled }
 
         wireCrossProviderSignals()
         wireSounds()
+        activity.markLaunchComplete()
     }
 
     /// Context signals flow through the coordinator so providers never talk

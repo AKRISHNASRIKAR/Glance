@@ -30,10 +30,19 @@ final class NotchViewModel: ObservableObject {
     }
 
     private var cancellables: Set<AnyCancellable> = []
+    private let scheduler: GlanceScheduler
+    private var hoverOpenHandle: GlanceCancellable?
+    private var autoCloseHandle: GlanceCancellable?
 
-    init(coordinator: AppCoordinator, geometry: NotchGeometry) {
+    /// Boring.notch-style timings: open shortly after hover settles, close
+    /// about a second after the cursor leaves.
+    private let hoverOpenDelay: TimeInterval = 0.18
+    private let autoCloseDelay: TimeInterval = 1.0
+
+    init(coordinator: AppCoordinator, geometry: NotchGeometry, scheduler: GlanceScheduler = TimerScheduler()) {
         self.coordinator = coordinator
         self.geometry = geometry
+        self.scheduler = scheduler
 
         coordinator.interruptions.$current
             .sink { [weak self] interruption in
@@ -82,7 +91,7 @@ final class NotchViewModel: ObservableObject {
             return size
         case .live: return geometry.liveSize()
         case .peek: return geometry.peekSize()
-        case .expanded: return NotchGeometry.expandedSize
+        case .expanded: return geometry.expandedSize
         }
     }
 
@@ -99,24 +108,58 @@ final class NotchViewModel: ObservableObject {
 
     // MARK: Intent
 
+    /// Haptic tick on real interactions (trackpads only; no-op elsewhere).
+    private func haptic(_ pattern: NSHapticFeedbackManager.FeedbackPattern) {
+        NSHapticFeedbackManager.defaultPerformer.perform(pattern, performanceTime: .default)
+    }
+
+    /// Hover drives everything: hovering the notch opens it after a short
+    /// settle; leaving closes it a second later. Re-entering cancels the
+    /// pending close.
     func setHovering(_ hovering: Bool) {
         guard isHovering != hovering else { return }
         withAnimation(reduceMotion ? nil : .spring(response: 0.30, dampingFraction: 0.8)) {
             isHovering = hovering
+        }
+        if hovering {
+            haptic(.levelChange)
+            autoCloseHandle?.cancel()
+            autoCloseHandle = nil
+            if !userExpanded {
+                hoverOpenHandle?.cancel()
+                hoverOpenHandle = scheduler.schedule(after: hoverOpenDelay) { [weak self] in
+                    guard let self, self.isHovering, !self.userExpanded else { return }
+                    self.expand()
+                }
+            }
+        } else {
+            hoverOpenHandle?.cancel()
+            hoverOpenHandle = nil
+            if userExpanded {
+                autoCloseHandle?.cancel()
+                autoCloseHandle = scheduler.schedule(after: autoCloseDelay) { [weak self] in
+                    guard let self, !self.isHovering else { return }
+                    self.collapse()
+                }
+            }
         }
     }
 
     func expand() {
         guard !userExpanded else { return }
         coordinator.screens.notchWillOpen()
+        haptic(.generic)
         withAnimation(reduceMotion ? nil : .spring(response: 0.38, dampingFraction: 0.82)) {
             userExpanded = true
         }
-        coordinator.nowPlaying.setDetailVisible(selectedScreenType == .nowPlaying)
+        coordinator.nowPlaying.setDetailVisible(coordinator.screens.selectedPageContains(.nowPlaying))
     }
 
     func collapse() {
         guard userExpanded else { return }
+        autoCloseHandle?.cancel()
+        autoCloseHandle = nil
+        haptic(.generic)
         withAnimation(reduceMotion ? nil : .spring(response: 0.32, dampingFraction: 0.85)) {
             userExpanded = false
         }
@@ -128,14 +171,10 @@ final class NotchViewModel: ObservableObject {
         userExpanded ? collapse() : expand()
     }
 
-    /// Tapping the peek surface opens the expanded view (which shows the
-    /// interruption detail while one is active).
+    /// Clicking the idle/peek notch opens it immediately (hover already
+    /// opens it; the click is a fast path and the accessible affordance).
     func handleClick() {
-        if userExpanded {
-            // Clicks inside expanded content are handled by controls.
-            return
-        }
-        expand()
+        if !userExpanded { expand() }
     }
 
     // MARK: Screen navigation
@@ -145,38 +184,70 @@ final class NotchViewModel: ObservableObject {
     }
 
     func navigate(by delta: Int) {
+        let before = coordinator.screens.selectedPageIndex
         coordinator.screens.navigate(by: delta)
-        coordinator.nowPlaying.setDetailVisible(selectedScreenType == .nowPlaying)
+        if coordinator.screens.selectedPageIndex != before {
+            haptic(.alignment)
+        }
+        coordinator.nowPlaying.setDetailVisible(coordinator.screens.selectedPageContains(.nowPlaying))
     }
 
     // MARK: Scroll-driven paging
 
     private var scrollAccumulator: CGFloat = 0
-    private var lastScrollNavigation = Date.distantPast
+    private var gestureConsumed = false
+    private var lastLegacyScrollAt = Date.distantPast
 
-    /// Two-finger horizontal swipe / horizontal mouse scroll while expanded.
-    /// Accumulates deltas and fires one navigation per gesture burst.
-    func handleScroll(deltaX: CGFloat) {
+    /// One page turn per gesture: accumulate finger-down deltas, navigate
+    /// once past the threshold, then ignore the rest of the gesture —
+    /// including all momentum — until the fingers go down again.
+    func handleScroll(event: NSEvent) {
         guard userExpanded else { return }
-        let now = Date()
-        if now.timeIntervalSince(lastScrollNavigation) < 0.35 {
-            return // settle time between page turns
-        }
-        scrollAccumulator += deltaX
-        let threshold: CGFloat = 30
-        if scrollAccumulator <= -threshold {
-            navigate(by: 1)
-            scrollAccumulator = 0
-            lastScrollNavigation = now
-        } else if scrollAccumulator >= threshold {
-            navigate(by: -1)
-            scrollAccumulator = 0
-            lastScrollNavigation = now
-        }
-    }
 
-    func scrollGestureEnded() {
-        scrollAccumulator = 0
+        // Momentum (inertia) events never navigate; they were the cause of
+        // page skipping.
+        guard event.momentumPhase == [] else { return }
+
+        let threshold: CGFloat = 30
+
+        if event.phase == .began {
+            scrollAccumulator = 0
+            gestureConsumed = false
+        }
+
+        if event.phase == .changed || event.phase == .began {
+            guard !gestureConsumed else { return }
+            scrollAccumulator += event.scrollingDeltaX
+            if abs(scrollAccumulator) >= threshold {
+                navigate(by: scrollAccumulator < 0 ? 1 : -1)
+                gestureConsumed = true
+                scrollAccumulator = 0
+            }
+            return
+        }
+
+        if event.phase == .ended || event.phase == .cancelled {
+            scrollAccumulator = 0
+            return
+        }
+
+        // Legacy scroll wheels / horizontal mouse scroll (no phases): treat
+        // bursts within 400 ms as one gesture.
+        if event.phase == [] {
+            let now = Date()
+            if now.timeIntervalSince(lastLegacyScrollAt) > 0.4 {
+                scrollAccumulator = 0
+                gestureConsumed = false
+            }
+            lastLegacyScrollAt = now
+            guard !gestureConsumed else { return }
+            scrollAccumulator += event.scrollingDeltaX
+            if abs(scrollAccumulator) >= threshold {
+                navigate(by: scrollAccumulator < 0 ? 1 : -1)
+                gestureConsumed = true
+                scrollAccumulator = 0
+            }
+        }
     }
 
     // MARK: Keyboard (panel-local, only while the panel is key & expanded)

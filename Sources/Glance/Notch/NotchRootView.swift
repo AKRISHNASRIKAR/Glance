@@ -6,12 +6,16 @@ import SwiftUI
 struct NotchRootView: View {
     @EnvironmentObject var viewModel: NotchViewModel
     @EnvironmentObject var coordinator: AppCoordinator
+    @EnvironmentObject var screens: ScreenStore
+    @EnvironmentObject var settings: SettingsStore
+    @EnvironmentObject var nowPlaying: NowPlayingProvider
 
     var body: some View {
         GeometryReader { proxy in
             let size = viewModel.shapeSize
             NotchShape(bottomRadius: bottomRadius)
                 .fill(Color.black)
+                .overlay(fullBleedArtwork)
                 .overlay(content)
                 .clipShape(NotchShape(bottomRadius: bottomRadius))
                 .frame(width: size.width, height: size.height)
@@ -27,6 +31,21 @@ struct NotchRootView: View {
         .ignoresSafeArea()
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Glance notch")
+    }
+
+    /// Artwork appearance covers the entire expanded shape — including the
+    /// notch row — but only while the Now Playing page is the one on screen,
+    /// so it never bleeds into other pages.
+    @ViewBuilder
+    private var fullBleedArtwork: some View {
+        if viewModel.visualState == .expanded,
+           viewModel.currentInterruption == nil,
+           settings.settings.nowPlaying.appearance == .artwork,
+           screens.selectedPageContains(.nowPlaying),
+           nowPlaying.artwork != nil {
+            ArtworkBackgroundView(config: settings.settings.nowPlaying)
+                .transition(.opacity)
+        }
     }
 
     private var bottomRadius: CGFloat {
@@ -103,12 +122,14 @@ struct NotchWingsView<Leading: View, Trailing: View>: View {
         HStack(spacing: 0) {
             leading()
                 .frame(maxWidth: .infinity, alignment: .center)
+            // Nothing may render under the sensor housing: reserve the full
+            // notch width plus a safety margin.
             Color.clear
-                .frame(width: notchWidth * 0.72) // keep clear of the sensor housing
+                .frame(width: notchWidth + 8)
             trailing()
                 .frame(maxWidth: .infinity, alignment: .center)
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, 8)
     }
 }
 

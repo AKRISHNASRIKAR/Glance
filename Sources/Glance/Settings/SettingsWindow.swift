@@ -177,7 +177,7 @@ struct ScreensPane: View {
         VStack(alignment: .leading, spacing: 18) {
             SettingsHeader(
                 title: "Notch Screens",
-                subtitle: "The screens you swipe between in the expanded notch. Drag to reorder."
+                subtitle: "The screens you swipe between in the expanded notch. Drag to reorder. Two adjacent half-width screens share one page side by side."
             )
             List {
                 ForEach(screens.screens) { screen in
@@ -185,6 +185,17 @@ struct ScreensPane: View {
                         Image(systemName: symbol(for: screen.type)).frame(width: 20)
                         Text(screen.type.displayName)
                         Spacer()
+                        Picker("", selection: Binding(
+                            get: { screen.width },
+                            set: { screens.setScreenWidth(id: screen.id, width: $0) }
+                        )) {
+                            Text("Full").tag(ScreenWidth.full)
+                            Text("Half").tag(ScreenWidth.half)
+                        }
+                        .labelsHidden()
+                        .pickerStyle(.segmented)
+                        .controlSize(.small)
+                        .frame(width: 110)
                         Toggle("", isOn: Binding(
                             get: { screen.isEnabled },
                             set: { screens.setScreen(id: screen.id, enabled: $0) }
@@ -209,6 +220,9 @@ struct ScreensPane: View {
                 }
             }
             .frame(height: 200)
+            Text("Example: set Pomodoro to Half and add another Half screen next to it — they'll share one page, Pomodoro on the right.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             let addable = screens.addableScreenTypes { type in
                 switch type {

@@ -34,6 +34,11 @@ public final class SpotifySource: MediaSource {
                 self?.onStateChange?(normalized)
             }
         }
+        refreshNowPlaying()
+    }
+
+    public func refreshNowPlaying() {
+        snapshotTask?.cancel()
         snapshotTask = Task { [weak self] in
             await self?.loadInitialSnapshot()
         }

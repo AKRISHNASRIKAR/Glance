@@ -61,6 +61,47 @@ public final class ScreenStore: ObservableObject {
         return enabledScreens.firstIndex { $0.id == id } ?? 0
     }
 
+    // MARK: Pages (layout)
+
+    /// Group screens into pages: full-width screens get their own page;
+    /// consecutive half-width screens pair up (left, right).
+    public static func pages(for screens: [NotchScreen]) -> [[NotchScreen]] {
+        var result: [[NotchScreen]] = []
+        var pendingHalf: NotchScreen?
+        for screen in screens {
+            if screen.width == .half {
+                if let left = pendingHalf {
+                    result.append([left, screen])
+                    pendingHalf = nil
+                } else {
+                    pendingHalf = screen
+                }
+            } else {
+                if let left = pendingHalf {
+                    result.append([left])
+                    pendingHalf = nil
+                }
+                result.append([screen])
+            }
+        }
+        if let left = pendingHalf { result.append([left]) }
+        return result
+    }
+
+    public var pages: [[NotchScreen]] { Self.pages(for: enabledScreens) }
+
+    public var selectedPageIndex: Int {
+        guard let id = selectedScreen?.id else { return 0 }
+        return pages.firstIndex { $0.contains(where: { $0.id == id }) } ?? 0
+    }
+
+    /// Does the currently selected page contain a screen of this type?
+    public func selectedPageContains(_ type: ScreenType) -> Bool {
+        let pages = self.pages
+        guard pages.indices.contains(selectedPageIndex) else { return false }
+        return pages[selectedPageIndex].contains { $0.type == type }
+    }
+
     // MARK: Selection & navigation
 
     public func select(id: UUID) {
@@ -68,13 +109,14 @@ public final class ScreenStore: ObservableObject {
         settings.update { $0.selectedScreenID = id }
     }
 
-    /// Move selection horizontally. Clamped at the ends — the pager does not
-    /// wrap, so spatial position stays predictable.
+    /// Move selection horizontally by pages. Clamped at the ends — the pager
+    /// does not wrap, so spatial position stays predictable.
     public func navigate(by delta: Int) {
-        let screens = enabledScreens
-        guard !screens.isEmpty else { return }
-        let target = min(max(selectedIndex + delta, 0), screens.count - 1)
-        select(id: screens[target].id)
+        let pages = self.pages
+        guard !pages.isEmpty else { return }
+        let target = min(max(selectedPageIndex + delta, 0), pages.count - 1)
+        guard let first = pages[target].first else { return }
+        select(id: first.id)
     }
 
     // MARK: Restoration
@@ -124,6 +166,13 @@ public final class ScreenStore: ObservableObject {
 
     public func moveScreen(fromOffsets: IndexSet, toOffset: Int) {
         settings.update { $0.screens.moveElements(fromOffsets: fromOffsets, toOffset: toOffset) }
+    }
+
+    public func setScreenWidth(id: UUID, width: ScreenWidth) {
+        settings.update { s in
+            guard let idx = s.screens.firstIndex(where: { $0.id == id }) else { return }
+            s.screens[idx].width = width
+        }
     }
 
     public func setScreen(id: UUID, enabled: Bool) {

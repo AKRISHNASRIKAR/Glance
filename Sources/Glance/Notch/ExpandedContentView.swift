@@ -24,32 +24,46 @@ struct ScreenPagerView: View {
     @EnvironmentObject var viewModel: NotchViewModel
 
     var body: some View {
-        let enabled = screens.enabledScreens
-        let index = screens.selectedIndex
+        let pages = screens.pages
+        let index = screens.selectedPageIndex
 
-        VStack(spacing: 0) {
-            GeometryReader { proxy in
-                HStack(spacing: 0) {
-                    ForEach(enabled) { screen in
-                        screenView(for: screen.type)
-                            .frame(width: proxy.size.width, height: proxy.size.height)
-                    }
+        GeometryReader { proxy in
+            HStack(spacing: 0) {
+                ForEach(pages.indices, id: \.self) { pageIndex in
+                    pageView(pages[pageIndex], width: proxy.size.width, height: proxy.size.height)
                 }
-                .offset(x: -CGFloat(index) * proxy.size.width)
-                .animation(
-                    viewModel.reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.85),
-                    value: index
-                )
             }
-            .clipped()
-
-            if enabled.count > 1 {
-                pageIndicator(count: enabled.count, index: index)
-                    .padding(.bottom, 7)
+            .offset(x: -CGFloat(index) * proxy.size.width)
+            .animation(
+                viewModel.reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.85),
+                value: index
+            )
+        }
+        .clipped()
+        // Content lives strictly below the physical notch row so nothing is
+        // ever hidden by the sensor housing.
+        .padding(.top, viewModel.geometry.hasPhysicalNotch ? viewModel.geometry.idleSize.height : 6)
+        // Page dots overlay the bottom edge of the shape itself — no
+        // separate strip.
+        .overlay(alignment: .bottom) {
+            if pages.count > 1 {
+                pageIndicator(count: pages.count, index: index)
+                    .padding(.bottom, 4)
             }
         }
-        .padding(.top, viewModel.geometry.hasPhysicalNotch ? viewModel.geometry.idleSize.height * 0.55 : 6)
         .accessibilityElement(children: .contain)
+    }
+
+    /// One page: a single full-width screen, or two half-width screens
+    /// side by side (e.g. Pomodoro right, anything else left).
+    private func pageView(_ page: [NotchScreen], width: CGFloat, height: CGFloat) -> some View {
+        HStack(spacing: 0) {
+            ForEach(page) { screen in
+                screenView(for: screen.type)
+                    .frame(width: width / CGFloat(page.count), height: height)
+            }
+        }
+        .frame(width: width, height: height)
     }
 
     @ViewBuilder
@@ -97,20 +111,23 @@ struct ScreenPagerView: View {
 
 struct InterruptionDetailView: View {
     @EnvironmentObject var coordinator: AppCoordinator
+    @EnvironmentObject var viewModel: NotchViewModel
     let interruption: NotchInterruption
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 7) {
             Spacer(minLength: 0)
-            Image(systemName: interruption.symbolName ?? "bell.fill")
-                .font(.system(size: 26, weight: .semibold))
-                .foregroundStyle(iconColor)
-            Text(interruption.title)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(.white)
+            HStack(spacing: 8) {
+                Image(systemName: interruption.symbolName ?? "bell.fill")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(iconColor)
+                Text(interruption.title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
             if let subtitle = interruption.subtitle {
                 Text(subtitle)
-                    .font(.system(size: 12.5))
+                    .font(.system(size: 11.5))
                     .foregroundStyle(.white.opacity(0.65))
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
@@ -131,7 +148,7 @@ struct InterruptionDetailView: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 24)
-        .padding(.top, 14)
+        .padding(.top, viewModel.geometry.hasPhysicalNotch ? viewModel.geometry.idleSize.height : 6)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
