@@ -239,4 +239,19 @@ struct SettingsStoreTests {
         #expect(settings.settings.screens.map(\.type) == [.nowPlaying, .pomodoro])
         #expect(settings.settings.pomodoro.focusDuration == 25 * 60)
     }
+
+    /// A settings file written before `enableSystemMediaRemote` (or any
+    /// other nowPlaying field) existed must not reset the whole settings
+    /// file to defaults — only the new field should fall back.
+    @Test func nowPlayingSettingsDecodeToleratesNewFields() throws {
+        let url = makeTempDirectory().appendingPathComponent("settings.json")
+        let legacy = #"""
+        {"schemaVersion":1,"nowPlaying":{"isEnabled":true,"appearance":"artwork","artworkBlur":0.9,"backgroundIntensity":0.5,"adaptiveContrast":false,"showAlbumArtwork":true,"showPlaybackProgress":false,"showPreviousNextControls":true}}
+        """#
+        try Data(legacy.utf8).write(to: url)
+        let settings = SettingsStore(fileURL: url, scheduler: TestClock())
+        #expect(settings.settings.nowPlaying.appearance == .artwork)
+        #expect(settings.settings.nowPlaying.artworkBlur == 0.9)
+        #expect(settings.settings.nowPlaying.enableSystemMediaRemote == false)
+    }
 }

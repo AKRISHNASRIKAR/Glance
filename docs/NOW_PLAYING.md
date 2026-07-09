@@ -4,26 +4,60 @@
 
 macOS provides **no public API to read another application's now-playing
 state**. `MPNowPlayingInfoCenter` is publish-only; the framework that powers
-Control Center's media widget (`MediaRemote`) is private. Glance **does not
-use MediaRemote** — private frameworks break without notice, are grounds for
-notarization/App Review problems, and violate this project's rules.
+Control Center's media widget (`MediaRemote`) is private, undocumented, and
+unversioned.
 
-Instead, Glance ships per-source providers behind a `MediaSource`
-abstraction:
+Glance ships two tiers, and is explicit in the UI about which is which:
 
-| Source | State changes | Position | Artwork | Control |
-|---|---|---|---|---|
-| Apple Music | `com.apple.Music.playerInfo` distributed notification (event-driven) | Scripting (`player position`) | Scripting (`data of artwork 1`) | Scripting |
-| Spotify | `com.spotify.client.PlaybackStateChanged` (includes position) | Scripting | `artwork url` → HTTPS fetch from Spotify's CDN | Scripting |
+| Source | State changes | Position | Artwork | Control | API surface |
+|---|---|---|---|---|---|
+| Apple Music | `com.apple.Music.playerInfo` distributed notification (event-driven) | Scripting (`player position`) | Scripting (`data of artwork 1`) | Scripting | Public (Apple Events / Automation) |
+| Spotify | `com.spotify.client.PlaybackStateChanged` (includes position) | Scripting | `artwork url` → HTTPS fetch from Spotify's CDN | Scripting | Public |
+| System-wide (**Experimental**, opt-in) | `MediaRemote` notification (event-driven) | From the last info dictionary | Embedded artwork data in the info dictionary | `MRMediaRemoteSendCommand` | **Private, undocumented** |
 
 Scripting uses Apple Events, which macOS gates behind the **Automation
 permission** (`NSAppleEventsUsageDescription`); the user is prompted on first
 control/artwork access per app. Glance never sends Apple Events to an app
 that isn't running.
 
-Consequence, stated plainly: **Safari, Chrome, YouTube, and other players are
-not supported today.** Additional `MediaSource` implementations are the
-extension point (documented future work), not a universal scraper.
+### System-wide Now Playing (Experimental)
+
+Every app that shows a system-wide Now Playing widget — including Control
+Center itself — reads from Apple's private `MediaRemote.framework`. There is
+no alternative; this is the only way to see what's playing in an arbitrary
+app (Safari, Chrome, VLC, a podcast app, ...).
+
+Glance isolates this to two files:
+
+- `MediaRemoteBridge.swift` — dlopen's the framework and dlsym's each symbol
+  it needs (`MRMediaRemoteGetNowPlayingInfo`,
+  `MRMediaRemoteRegisterForNowPlayingNotifications`, `MRMediaRemoteSendCommand`,
+  and — best-effort only — `MRMediaRemoteGetNowPlayingClient` to label the
+  source with a real app name). Every lookup is nil-checked; if the
+  framework or a required symbol is missing, `isAvailable` is `false` and
+  the feature reports **Unavailable** rather than crashing or faking data.
+  The dictionary key names it reads (`kMRMediaRemoteNowPlayingInfoTitle` and
+  siblings) are the values used consistently across community
+  reverse-engineering and several public open-source MediaRemote wrappers —
+  Apple has never published them.
+- `SystemMediaRemoteSource.swift` — the `MediaSource` conformance that turns
+  the raw dictionary into a `MediaState`.
+
+This is **the only place in the codebase that uses a private API**, and it
+is fully opt-in:
+
+- Off by default. `NowPlayingSettings.enableSystemMediaRemote` gates it.
+- The private framework is not even `dlopen`'d until the user turns the
+  toggle on — `MediaRemoteBridge.shared` is a lazy singleton nothing
+  references until then.
+- Settings labels it **Experimental** with an explicit note that it uses an
+  undocumented API that could break on any macOS update without notice.
+- It never replaces or disables the Apple Music/Spotify integrations; all
+  three sources arbitrate normally (playing beats paused; most-recent-change
+  breaks ties).
+- The resolved app name (e.g. "Safari") is best-effort via
+  `MediaState.sourceAppName`; when it can't be resolved, the UI falls back to
+  the generic "System Media" label rather than guessing.
 
 ## Normalization
 
@@ -64,5 +98,6 @@ Track changes crossfade the background and the square artwork independently
 ## Settings
 
 Player appearance (Minimal / Artwork), artwork blur, background intensity,
-adaptive contrast toggle, and show/hide for artwork, progress, and
-previous/next controls — all applied live, no restart.
+adaptive contrast toggle, show/hide for artwork, progress, and
+previous/next controls, and the System-wide Now Playing experimental toggle
+— all applied live, no restart.

@@ -19,8 +19,20 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
     @Published public private(set) var state: MediaState?
     @Published public private(set) var artwork: CGImage?
     @Published public private(set) var artworkAnalysis: ArtworkAnalysis?
+    /// Whether the experimental system-wide (MediaRemote) source is active.
+    @Published public private(set) var systemMediaRemoteEnabled = false
+
+    /// False if the private MediaRemote framework or a required symbol
+    /// failed to load. Only meaningful once the feature has been enabled at
+    /// least once (the framework is not probed before then).
+    public var systemMediaRemoteAvailable: Bool {
+        (systemMediaSource as? SystemMediaRemoteSource)?.isAvailable ?? false
+    }
 
     private let sources: [any MediaSource]
+    /// Experimental, opt-in — kept separate from `sources` so it is never
+    /// started unless explicitly enabled via `setSystemMediaRemoteEnabled`.
+    private let systemMediaSource: (any MediaSource)?
     private var sourceStates: [MediaSourceKind: MediaState] = [:]
     private var lastChangeAt: [MediaSourceKind: Date] = [:]
     private let analyzer = ArtworkAnalyzer()
@@ -33,16 +45,23 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
 
     public init(
         sources: [any MediaSource]? = nil,
+        systemMediaSource: (any MediaSource)? = SystemMediaRemoteSource(),
         scheduler: GlanceScheduler = TimerScheduler(),
         timeSource: TimeSource = SystemTimeSource()
     ) {
         self.scheduler = scheduler
         self.timeSource = timeSource
         self.sources = sources ?? [AppleMusicSource(), SpotifySource()]
+        self.systemMediaSource = systemMediaSource
         for source in self.sources {
             let kind = source.kind
             source.onStateChange = { [weak self] newState in
                 self?.sourceDidChange(kind: kind, newState: newState)
+            }
+        }
+        if let systemMediaSource {
+            systemMediaSource.onStateChange = { [weak self] newState in
+                self?.sourceDidChange(kind: .systemMediaRemote, newState: newState)
             }
         }
     }
@@ -50,9 +69,31 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
     public func start() {
         status = .running
         sources.forEach { $0.start() }
+        if systemMediaRemoteEnabled {
+            systemMediaSource?.start()
+        }
         // The launch snapshot can race the Automation permission prompt or a
         // still-starting player; retry a few times until we know a state.
         scheduleSnapshotRetry(attempt: 0)
+    }
+
+    /// Turn the experimental system-wide source on or off at runtime (the
+    /// Settings toggle). A no-op if the private framework failed to load.
+    public func setSystemMediaRemoteEnabled(_ enabled: Bool) {
+        guard enabled != systemMediaRemoteEnabled, let systemMediaSource else { return }
+        systemMediaRemoteEnabled = enabled
+        guard status.isRunning else { return } // applied when start() runs
+        if enabled {
+            systemMediaSource.start()
+        } else {
+            systemMediaSource.stop()
+            // Bypasses sourceDidChange's enabled-gate below (it would no-op
+            // now that the flag just flipped to false) to actively clear any
+            // state the source already published.
+            sourceStates[.systemMediaRemote] = nil
+            lastChangeAt[.systemMediaRemote] = nil
+            recomputeActiveState()
+        }
     }
 
     private var snapshotRetryHandle: GlanceCancellable?
@@ -64,12 +105,14 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
         snapshotRetryHandle = scheduler.schedule(after: delays[attempt]) { [weak self] in
             guard let self, self.status.isRunning, self.state == nil else { return }
             self.sources.forEach { $0.refreshNowPlaying() }
+            if self.systemMediaRemoteEnabled { self.systemMediaSource?.refreshNowPlaying() }
             self.scheduleSnapshotRetry(attempt: attempt + 1)
         }
     }
 
     public func stop() {
         sources.forEach { $0.stop() }
+        systemMediaSource?.stop()
         sourceStates = [:]
         state = nil
         artwork = nil
@@ -88,6 +131,9 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
     /// break to the most recent change. This is testable via injected fake
     /// sources.
     func sourceDidChange(kind: MediaSourceKind, newState: MediaState?) {
+        // Guards against any stray callback reaching arbitration before the
+        // experimental source has been explicitly enabled.
+        if kind == .systemMediaRemote && !systemMediaRemoteEnabled { return }
         sourceStates[kind] = newState
         lastChangeAt[kind] = timeSource.now
         recomputeActiveState()
@@ -139,11 +185,18 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
         ))
     }
 
+    /// Looks up the live source object for a kind, across both the always-on
+    /// sources and the experimental system-wide one.
+    private func activeSource(for kind: MediaSourceKind) -> (any MediaSource)? {
+        if let match = sources.first(where: { $0.kind == kind }) { return match }
+        return systemMediaSource?.kind == kind ? systemMediaSource : nil
+    }
+
     // MARK: Commands
 
     public func perform(_ command: MediaCommand) {
         guard let active = state else { return }
-        sources.first { $0.kind == active.source }?.perform(command)
+        activeSource(for: active.source)?.perform(command)
     }
 
     // MARK: Artwork
@@ -153,7 +206,7 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
         let artworkID = state.artworkID
         artworkTask = Task { [weak self] in
             guard let self else { return }
-            guard let source = self.sources.first(where: { $0.kind == state.source }) else { return }
+            guard let source = self.activeSource(for: state.source) else { return }
             let data = await source.fetchArtwork(for: state)
             guard !Task.isCancelled, self.state?.artworkID == artworkID else { return }
             guard let data else {
@@ -187,6 +240,7 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
             if state == nil {
                 // Opening the screen with no known state: ask the players.
                 sources.forEach { $0.refreshNowPlaying() }
+                if systemMediaRemoteEnabled { systemMediaSource?.refreshNowPlaying() }
             }
             samplePositionNow()
         }
@@ -215,7 +269,7 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
 
     private func samplePositionNow() {
         guard let active = state, active.playbackState == .playing,
-              let source = sources.first(where: { $0.kind == active.source }) else { return }
+              let source = activeSource(for: active.source) else { return }
         let artworkID = active.artworkID
         Task { [weak self] in
             guard let position = await source.fetchPosition() else { return }

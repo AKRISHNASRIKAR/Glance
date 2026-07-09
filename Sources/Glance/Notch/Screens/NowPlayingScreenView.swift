@@ -98,7 +98,7 @@ struct NowPlayingScreenView: View {
                 .accessibilityLabel("Next track")
             }
             Spacer(minLength: 0)
-            Text(state.source.displayName)
+            Text(state.displaySourceName)
                 .font(.system(size: 9.5, weight: .medium))
                 .foregroundStyle(.white.opacity(0.35))
         }

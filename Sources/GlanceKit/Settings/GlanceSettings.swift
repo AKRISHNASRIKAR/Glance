@@ -99,8 +99,29 @@ public struct NowPlayingSettings: Codable, Equatable, Sendable {
     public var showAlbumArtwork: Bool = true
     public var showPlaybackProgress: Bool = true
     public var showPreviousNextControls: Bool = true
+    /// Experimental: system-wide Now Playing via Apple's private
+    /// MediaRemote framework (sees any app's media, e.g. browser tabs).
+    /// Off by default. See docs/NOW_PLAYING.md.
+    public var enableSystemMediaRemote: Bool = false
 
     public init() {}
+
+    /// Tolerant decode: a settings file written before `enableSystemMediaRemote`
+    /// existed (or any other field here) must still decode instead of
+    /// throwing and resetting the whole settings file to defaults.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = NowPlayingSettings()
+        isEnabled = try c.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? d.isEnabled
+        appearance = try c.decodeIfPresent(PlayerAppearance.self, forKey: .appearance) ?? d.appearance
+        artworkBlur = try c.decodeIfPresent(Double.self, forKey: .artworkBlur) ?? d.artworkBlur
+        backgroundIntensity = try c.decodeIfPresent(Double.self, forKey: .backgroundIntensity) ?? d.backgroundIntensity
+        adaptiveContrast = try c.decodeIfPresent(Bool.self, forKey: .adaptiveContrast) ?? d.adaptiveContrast
+        showAlbumArtwork = try c.decodeIfPresent(Bool.self, forKey: .showAlbumArtwork) ?? d.showAlbumArtwork
+        showPlaybackProgress = try c.decodeIfPresent(Bool.self, forKey: .showPlaybackProgress) ?? d.showPlaybackProgress
+        showPreviousNextControls = try c.decodeIfPresent(Bool.self, forKey: .showPreviousNextControls) ?? d.showPreviousNextControls
+        enableSystemMediaRemote = try c.decodeIfPresent(Bool.self, forKey: .enableSystemMediaRemote) ?? d.enableSystemMediaRemote
+    }
 }
 
 // MARK: - Pomodoro

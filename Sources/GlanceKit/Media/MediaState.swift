@@ -10,11 +10,15 @@ public enum PlaybackState: String, Sendable, Equatable {
 public enum MediaSourceKind: String, Sendable, Equatable, CaseIterable {
     case appleMusic
     case spotify
+    /// Experimental system-wide source (any app, via Apple's private
+    /// MediaRemote framework). See docs/NOW_PLAYING.md.
+    case systemMediaRemote
 
     public var displayName: String {
         switch self {
         case .appleMusic: return "Apple Music"
         case .spotify: return "Spotify"
+        case .systemMediaRemote: return "System Media"
         }
     }
 }
@@ -37,6 +41,11 @@ public struct MediaState: Equatable, Sendable {
     public var source: MediaSourceKind
     /// Identifier for artwork caching (persistent track id or title+album hash).
     public var artworkID: String
+    /// Real application name for system-wide sources (e.g. "Safari"), when
+    /// it could be resolved. Nil for Apple Music/Spotify — their source
+    /// already names them accurately — or when resolution fails; never a
+    /// guess.
+    public var sourceAppName: String?
 
     public init(
         title: String,
@@ -47,7 +56,8 @@ public struct MediaState: Equatable, Sendable {
         elapsedCapturedAt: Date? = nil,
         playbackState: PlaybackState,
         source: MediaSourceKind,
-        artworkID: String? = nil
+        artworkID: String? = nil,
+        sourceAppName: String? = nil
     ) {
         self.title = title
         self.artist = artist
@@ -58,7 +68,12 @@ public struct MediaState: Equatable, Sendable {
         self.playbackState = playbackState
         self.source = source
         self.artworkID = artworkID ?? "\(source.rawValue)|\(title)|\(album ?? "")|\(artist ?? "")"
+        self.sourceAppName = sourceAppName
     }
+
+    /// The name to display for where this is playing from — the real app
+    /// name when known (system-wide source), otherwise the source's own name.
+    public var displaySourceName: String { sourceAppName ?? source.displayName }
 
     /// Current interpolated position (see progress-honesty note above).
     public func interpolatedElapsed(at now: Date) -> TimeInterval? {

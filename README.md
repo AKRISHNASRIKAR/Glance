@@ -45,6 +45,7 @@ It is not a Dynamic Island clone, not a notification replacement, and not a dash
 - Horizontal Screen system — swipe, ⌘←/⌘→, or click the chevrons
 - Screen configuration: add, remove, reorder, enable/disable (persisted)
 - **Now Playing** for Apple Music and Spotify — Minimal and Artwork appearances, adaptive artwork contrast, crossfading backgrounds, real playback progress
+- Optional **System-wide Now Playing** (Experimental) — any app, including browser tabs, via a private Apple framework; off by default, clearly labeled
 - **Pomodoro** — focus/break cycles, long breaks, auto-start options, completion interruptions
 - Interruption engine: priority preemption, debouncing, expiry, persistent events, return-to-previous-screen
 - Optional **Battery & Charging** events (charger, 80%, full, low, critical)
@@ -100,7 +101,7 @@ Two appearances, switchable live in Settings:
 - **Minimal** — pure black background that blends into the physical notch; square artwork, title/artist, transport controls, progress.
 - **Artwork** — the album art becomes the blurred, translucent background of the whole screen, with an adaptive contrast engine (cached per-artwork analysis) keeping text readable on bright or dark art, and crossfades on track change.
 
-Supported sources: **Apple Music** and **Spotify**. macOS has no public API for reading arbitrary apps' playback, and Glance does not use the private MediaRemote framework — see [docs/NOW_PLAYING.md](docs/NOW_PLAYING.md) for the full honesty notes.
+Supported sources: **Apple Music** and **Spotify** via fully public/documented mechanisms. An optional **System-wide Now Playing (Experimental)** toggle adds any other app — Safari, Chrome, VLC, podcasts — using Apple's private, undocumented MediaRemote framework (the same one Control Center uses); it's off by default and Settings says plainly that it could break on a future macOS update. See [docs/NOW_PLAYING.md](docs/NOW_PLAYING.md) for the full honesty notes.
 
 ## Pomodoro
 

@@ -14,9 +14,10 @@ public protocol MediaSource: AnyObject {
 
     func start()
     func stop()
-    /// Re-read the player's current state via scripting (used at launch and
-    /// when the Now Playing screen opens with no known state — the initial
-    /// snapshot can fail if the Automation prompt is still pending).
+    /// Re-read the player's current state (used at launch and when the Now
+    /// Playing screen opens with no known state — the initial snapshot can
+    /// fail if the Automation prompt is still pending, or simply because
+    /// nothing has changed since `start()` to trigger a fresh notification).
     func refreshNowPlaying()
     func perform(_ command: MediaCommand)
     /// Sample the true playback position via scripting (nil if unavailable).

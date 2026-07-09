@@ -262,6 +262,7 @@ struct ScreensPane: View {
 
 struct NowPlayingPane: View {
     @EnvironmentObject var settings: SettingsStore
+    @EnvironmentObject var coordinator: AppCoordinator
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -298,6 +299,21 @@ struct NowPlayingPane: View {
                 }
                 Section {
                     Text("Playback control uses Automation permission — macOS asks the first time Glance controls Music or Spotify.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Section("Experimental") {
+                    Toggle("System-wide Now Playing", isOn: settingsBinding(settings, \.nowPlaying.enableSystemMediaRemote))
+                    if settings.settings.nowPlaying.enableSystemMediaRemote {
+                        HStack {
+                            Text("Status")
+                            Spacer()
+                            ProviderStatusBadge(status: coordinator.nowPlaying.systemMediaRemoteAvailable
+                                ? .running
+                                : .unavailable("MediaRemote framework unavailable"))
+                        }
+                    }
+                    Text("Sees what's playing in any app — Safari, Chrome, VLC, podcasts, and so on — the same way Control Center's Now Playing widget does. This uses an undocumented, private Apple framework, not a supported public API: it could stop working on a future macOS update without notice. Off by default; enabling it loads that framework for the first time.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

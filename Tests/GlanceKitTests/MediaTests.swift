@@ -175,7 +175,7 @@ struct NowPlayingArbitrationTests {
     @Test func startupRetriesSnapshotUntilStateIsKnown() {
         let clock = TestClock()
         let music = FakeSource(kind: .appleMusic)
-        let provider = NowPlayingProvider(sources: [music], scheduler: clock, timeSource: clock)
+        let provider = NowPlayingProvider(sources: [music], systemMediaSource: nil, scheduler: clock, timeSource: clock)
         provider.start()
         clock.advance(by: 8) // first two retries fire while state is unknown
         #expect(music.refreshCount == 2)
@@ -183,5 +183,30 @@ struct NowPlayingArbitrationTests {
         music.onStateChange?(MediaState(title: "Song", playbackState: .playing, source: .appleMusic))
         clock.advance(by: 30)
         #expect(music.refreshCount == 2)
+    }
+
+    @Test func systemMediaRemoteStaysOffUntilEnabled() {
+        let clock = TestClock()
+        let music = FakeSource(kind: .appleMusic)
+        let system = FakeSource(kind: .systemMediaRemote)
+        let provider = NowPlayingProvider(sources: [music], systemMediaSource: system, scheduler: clock, timeSource: clock)
+        provider.start()
+        system.onStateChange?(MediaState(title: "Browser Video", playbackState: .playing, source: .systemMediaRemote))
+        // Not enabled yet: arbitration must ignore it entirely.
+        #expect(provider.state == nil)
+
+        provider.setSystemMediaRemoteEnabled(true)
+        system.onStateChange?(MediaState(title: "Browser Video", playbackState: .playing, source: .systemMediaRemote))
+        #expect(provider.state?.title == "Browser Video")
+
+        provider.setSystemMediaRemoteEnabled(false)
+        #expect(provider.state == nil)
+    }
+
+    @Test func sourceAppNameOverridesDisplayName() {
+        var state = MediaState(title: "Video", playbackState: .playing, source: .systemMediaRemote)
+        #expect(state.displaySourceName == "System Media")
+        state.sourceAppName = "Safari"
+        #expect(state.displaySourceName == "Safari")
     }
 }

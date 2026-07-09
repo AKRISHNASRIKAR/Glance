@@ -49,6 +49,12 @@ final class AppCoordinator: ObservableObject {
         wireCrossProviderSignals()
         wireSounds()
         activity.markLaunchComplete()
+
+        settings.$settings
+            .map(\.nowPlaying.enableSystemMediaRemote)
+            .removeDuplicates()
+            .sink { [weak self] enabled in self?.nowPlaying.setSystemMediaRemoteEnabled(enabled) }
+            .store(in: &cancellables)
     }
 
     /// Context signals flow through the coordinator so providers never talk
