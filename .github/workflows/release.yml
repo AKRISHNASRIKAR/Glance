@@ -78,7 +78,7 @@ jobs:
         run: scripts/make-dmg.sh
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           # Unsigned builds stay drafts; signed+notarized builds publish.
           draft: ${{ secrets.CODESIGN_IDENTITY == '' }}
