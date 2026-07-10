@@ -1,5 +1,7 @@
 import Foundation
 
+extension NSAppleEventDescriptor: @unchecked Sendable {}
+
 /// Executes small AppleScript snippets on a dedicated serial queue.
 ///
 /// Why AppleScript: macOS has no public API for reading another app's
