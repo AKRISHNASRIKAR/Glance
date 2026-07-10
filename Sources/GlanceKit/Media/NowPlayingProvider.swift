@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import CoreGraphics
 import Foundation
@@ -39,9 +40,10 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
     private var artworkTask: Task<Void, Never>?
     private var positionPollHandle: GlanceCancellable?
     private var detailVisible = false
-    private var lastAnnouncedTrackID: String?
     private let scheduler: GlanceScheduler
     private let timeSource: TimeSource
+    private var wakeObserver: NSObjectProtocol?
+    private var activateObserver: NSObjectProtocol?
 
     public init(
         sources: [any MediaSource]? = nil,
@@ -75,6 +77,39 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
         // The launch snapshot can race the Automation permission prompt or a
         // still-starting player; retry a few times until we know a state.
         scheduleSnapshotRetry(attempt: 0)
+        observeSystemEvents()
+    }
+
+    /// Distributed notifications are the normal update path, but they're
+    /// silently lost across two real "interruptions": the process is asleep
+    /// during system sleep (nothing arrives to catch up on later), and the
+    /// notch can sit idle long enough that a missed notification never gets
+    /// retried. Both hooks below are event-driven — no polling, negligible
+    /// battery cost — and directly address already-playing media not being
+    /// picked up after a wake or a relaunch.
+    private func observeSystemEvents() {
+        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.refreshAllSources() }
+        }
+        activateObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.state == nil else { return }
+                self.refreshAllSources()
+            }
+        }
+    }
+
+    private func refreshAllSources() {
+        sources.forEach { $0.refreshNowPlaying() }
+        if systemMediaRemoteEnabled { systemMediaSource?.refreshNowPlaying() }
     }
 
     /// Turn the experimental system-wide source on or off at runtime (the
@@ -104,8 +139,7 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
         snapshotRetryHandle?.cancel()
         snapshotRetryHandle = scheduler.schedule(after: delays[attempt]) { [weak self] in
             guard let self, self.status.isRunning, self.state == nil else { return }
-            self.sources.forEach { $0.refreshNowPlaying() }
-            if self.systemMediaRemoteEnabled { self.systemMediaSource?.refreshNowPlaying() }
+            self.refreshAllSources()
             self.scheduleSnapshotRetry(attempt: attempt + 1)
         }
     }
@@ -122,6 +156,10 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
         positionPollHandle = nil
         snapshotRetryHandle?.cancel()
         snapshotRetryHandle = nil
+        if let wakeObserver { NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver) }
+        wakeObserver = nil
+        if let activateObserver { NotificationCenter.default.removeObserver(activateObserver) }
+        activateObserver = nil
         status = .disabled
     }
 
@@ -156,33 +194,12 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
         if let winner {
             if winner.artworkID != previousArtworkID {
                 loadArtwork(for: winner)
-                announceTrackChange(winner)
             }
         } else {
             artwork = nil
             artworkAnalysis = nil
         }
         updatePositionPolling()
-    }
-
-    /// Passive peek when the track changes — never steals the surface from
-    /// anything more important, and is debounced by the interruption engine.
-    private func announceTrackChange(_ state: MediaState) {
-        guard state.playbackState == .playing, state.artworkID != lastAnnouncedTrackID else { return }
-        // Skip the very first observation (app launch / provider start):
-        // announcing what was already playing is noise.
-        let isFirstObservation = lastAnnouncedTrackID == nil
-        lastAnnouncedTrackID = state.artworkID
-        guard !isFirstObservation else { return }
-        emitInterruption?(NotchInterruption(
-            provider: id,
-            kind: "track-changed",
-            title: state.title,
-            subtitle: state.artist,
-            symbolName: "music.note",
-            priority: .passive,
-            displayDuration: 3
-        ))
     }
 
     /// Looks up the live source object for a kind, across both the always-on

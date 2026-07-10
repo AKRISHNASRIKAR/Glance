@@ -146,9 +146,9 @@ private struct LiveIndicatorLeading: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.orange)
         case .claudeWorking:
-            Image(systemName: "sparkle")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.purple)
+            Image(systemName: "asterisk")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(Color.claudeAccent)
         case .media:
             MiniArtworkView(size: 18)
         case .network:
@@ -172,7 +172,7 @@ private struct LiveIndicatorTrailing: View {
                 .font(.system(size: 12, weight: .semibold, design: .rounded).monospacedDigit())
                 .foregroundStyle(.orange)
         case .claudeWorking:
-            AudioBarsView(color: .purple, isAnimating: !viewModel.reduceMotion)
+            AudioBarsView(color: .claudeAccent, isAnimating: !viewModel.reduceMotion)
         case .media:
             AudioBarsView(color: .white.opacity(0.9), isAnimating: !viewModel.reduceMotion)
         case .network:

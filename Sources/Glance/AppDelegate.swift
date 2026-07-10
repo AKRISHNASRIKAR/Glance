@@ -26,10 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func installStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(
-            systemSymbolName: "sparkle",
-            accessibilityDescription: "Glance"
-        )
+        item.button?.image = Self.menuBarIcon()
 
         let menu = NSMenu()
         menu.addItem(withTitle: "Open Notch", action: #selector(toggleNotch), keyEquivalent: "").target = self
@@ -47,5 +44,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openSettings() {
         settingsWindow.show()
+    }
+
+    /// Glance's mark: the notch itself, with the "device active" dot real
+    /// hardware shows beside it. Template image so AppKit tints it to match
+    /// the menu bar's light/dark/selected appearance automatically.
+    private static func menuBarIcon() -> NSImage? {
+        guard let url = Bundle.module.url(forResource: "MenuBarIcon", withExtension: "pdf"),
+              let image = NSImage(contentsOf: url) else {
+            return NSImage(systemSymbolName: "circle.dotted", accessibilityDescription: "Glance")
+        }
+        image.size = NSSize(width: 18, height: 18)
+        image.isTemplate = true
+        image.accessibilityDescription = "Glance"
+        return image
     }
 }

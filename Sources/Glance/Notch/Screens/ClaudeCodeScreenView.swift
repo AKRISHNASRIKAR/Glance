@@ -12,7 +12,7 @@ struct ClaudeCodeScreenView: View {
             Text("CLAUDE")
                 .font(.system(size: 10, weight: .semibold))
                 .tracking(2.2)
-                .foregroundStyle(Color.purple.opacity(0.9))
+                .foregroundStyle(Color.claudeAccent.opacity(0.9))
 
             switch claudeCode.status {
             case .notConfigured:
@@ -44,7 +44,7 @@ struct ClaudeCodeScreenView: View {
             statusBlock(symbol: "moon.zzz", tint: .white.opacity(0.5), title: "No active session", detail: nil)
         case .working:
             VStack(spacing: 7) {
-                AudioBarsView(color: .purple, isAnimating: true)
+                AudioBarsView(color: .claudeAccent, isAnimating: true)
                 Text("Working")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)

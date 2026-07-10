@@ -16,7 +16,9 @@ Semantic Versioning.
   adaptive artwork contrast engine with per-artwork caching, crossfading
   backgrounds, honest interpolated progress
 - Pomodoro with focus/short/long break cycle, auto-start options, sound, and
-  completion interruptions
+  completion interruptions; idle-only +/- arrows beside the ring to dial in
+  a custom phase duration directly, without opening Settings; session-
+  progress dots for the focus cycle
 - Interruption engine: priorities (passive/normal/important/urgent),
   preemption, debouncing, queue TTL, persistent interruptions, actions
 - Optional providers: Battery & Charging (IOKit, event-driven), Network
@@ -31,4 +33,19 @@ Semantic Versioning.
 - Privacy: Never Track list, local-only history, no telemetry
 - Packaging: app-bundle + DMG/ZIP scripts, CI, tag-driven release workflow
   with signing/notarization gates, Homebrew cask template
+- App icon and a new menu bar glyph — a notch-shaped mark with a centered
+  "live" indicator dot, replacing the placeholder SF Symbol
 - 90-test suite covering engines, providers, persistence, and normalization
+
+### Changed
+
+- Now Playing: tightened the gap between the track text and transport
+  controls, nudged content down from the top edge, and centered the
+  transport cluster under the progress bar instead of hugging the left edge
+- Pomodoro Screen redesigned: centered layout consistent with the other
+  Screens, larger ring, session-progress dots
+
+### Removed
+
+- The passive "track changed" Notch Interruption for Now Playing — song
+  changes are natural and no longer raise a dismissable notification

@@ -43,8 +43,14 @@ struct NowPlayingScreenView: View {
 
     // MARK: Player
 
+    /// Reserved width (artwork + its spacing) that the controls row "breaks
+    /// out" of below, so it can center on the full card instead of just the
+    /// text column. Keeping this the single source of truth for both spots
+    /// avoids the offset trick drifting out of sync with the artwork size.
+    private let artworkReservedWidth: CGFloat = 82 + 13
+
     private func playerContent(state: MediaState, config: NowPlayingSettings) -> some View {
-        HStack(spacing: 13) {
+        HStack(alignment: .top, spacing: 13) {
             if config.showAlbumArtwork {
                 LargeArtworkView(artworkID: state.artworkID)
             }
@@ -60,48 +66,65 @@ struct NowPlayingScreenView: View {
                         .lineLimit(1)
                 }
 
-                Spacer(minLength: 2)
-
                 controls(state: state, config: config)
+                    .padding(.top, 7)
+                    // Break out of the text column so the transport cluster
+                    // centers on the whole card — i.e. the notch's true
+                    // horizontal center, where the camera sits — not just
+                    // the narrower space beside the artwork.
+                    .padding(.leading, config.showAlbumArtwork ? -artworkReservedWidth : 0)
 
                 if config.showPlaybackProgress {
                     PlaybackProgressView(state: state)
-                        .padding(.top, 1)
+                        .padding(.top, 4)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 18)
-        .padding(.top, 2)
+        .padding(.top, 10)
         .padding(.bottom, 12)
+        // Top-anchored, not centered: the page's box already clears the
+        // physical notch and the page-indicator dots, but center-alignment
+        // would let any overflow spill both directions.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
+    /// Transport cluster centers within whatever width its parent gives it —
+    /// see the `.padding(.leading, -artworkReservedWidth)` call site above,
+    /// which expands that width to the full card. The source label is
+    /// pinned trailing, independent of that centering.
     private func controls(state: MediaState, config: NowPlayingSettings) -> some View {
-        HStack(spacing: 14) {
-            if config.showPreviousNextControls {
-                NotchIconButton(systemName: "backward.fill", size: 13) {
-                    nowPlaying.perform(.previousTrack)
+        ZStack {
+            HStack(spacing: 14) {
+                if config.showPreviousNextControls {
+                    NotchIconButton(systemName: "backward.fill", size: 13) {
+                        nowPlaying.perform(.previousTrack)
+                    }
+                    .accessibilityLabel("Previous track")
                 }
-                .accessibilityLabel("Previous track")
-            }
-            NotchIconButton(
-                systemName: state.playbackState == .playing ? "pause.fill" : "play.fill",
-                size: 17
-            ) {
-                nowPlaying.perform(.playPause)
-            }
-            .accessibilityLabel(state.playbackState == .playing ? "Pause" : "Play")
-            if config.showPreviousNextControls {
-                NotchIconButton(systemName: "forward.fill", size: 13) {
-                    nowPlaying.perform(.nextTrack)
+                NotchIconButton(
+                    systemName: state.playbackState == .playing ? "pause.fill" : "play.fill",
+                    size: 17
+                ) {
+                    nowPlaying.perform(.playPause)
                 }
-                .accessibilityLabel("Next track")
+                .accessibilityLabel(state.playbackState == .playing ? "Pause" : "Play")
+                if config.showPreviousNextControls {
+                    NotchIconButton(systemName: "forward.fill", size: 13) {
+                        nowPlaying.perform(.nextTrack)
+                    }
+                    .accessibilityLabel("Next track")
+                }
             }
-            Spacer(minLength: 0)
-            Text(state.displaySourceName)
-                .font(.system(size: 9.5, weight: .medium))
-                .foregroundStyle(.white.opacity(0.35))
+            HStack {
+                Spacer(minLength: 0)
+                Text(state.displaySourceName)
+                    .font(.system(size: 9.5, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.35))
+            }
         }
+        .frame(maxWidth: .infinity)
     }
 }
 

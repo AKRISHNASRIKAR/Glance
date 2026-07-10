@@ -36,12 +36,20 @@ final class MediaRemoteBridge: @unchecked Sendable {
     private typealias VoidFn = @convention(c) () -> Void
     private typealias SendCommandFn = @convention(c) (Int32, CFDictionary?) -> Bool
     private typealias GetNowPlayingClientFn = @convention(c) (DispatchQueue, @escaping @convention(block) (AnyObject?) -> Void) -> Void
+    private typealias SetWantsNotificationsFn = @convention(c) (Bool) -> Void
 
     private let getNowPlayingInfoFn: GetNowPlayingInfoFn?
     private let registerFn: RegisterFn?
     private let unregisterFn: VoidFn?
     private let sendCommandFn: SendCommandFn?
     private let getNowPlayingClientFn: GetNowPlayingClientFn?
+    /// Without this call, `MRMediaRemoteGetNowPlayingInfo` still answers a
+    /// one-off snapshot, but on current macOS the framework never posts
+    /// `kMRMediaRemoteNowPlayingInfoDidChangeNotification` afterward — so the
+    /// system-wide source would silently freeze on whatever was playing at
+    /// launch. Confirmed present via dlsym on this OS; best-effort like
+    /// `getNowPlayingClientFn` so its absence degrades rather than disables.
+    private let setWantsNotificationsFn: SetWantsNotificationsFn?
 
     /// True only if every symbol this bridge depends on for basic function
     /// resolved. Callers must check this before use.
@@ -57,6 +65,7 @@ final class MediaRemoteBridge: @unchecked Sendable {
             unregisterFn = nil
             sendCommandFn = nil
             getNowPlayingClientFn = nil
+            setWantsNotificationsFn = nil
             isAvailable = false
             return
         }
@@ -73,6 +82,7 @@ final class MediaRemoteBridge: @unchecked Sendable {
         // Best-effort only: used solely to label the source with a real app
         // name. Its absence doesn't disable the feature.
         getNowPlayingClientFn = load("MRMediaRemoteGetNowPlayingClient", as: GetNowPlayingClientFn.self)
+        setWantsNotificationsFn = load("MRMediaRemoteSetWantsNowPlayingNotifications", as: SetWantsNotificationsFn.self)
 
         isAvailable = getNowPlayingInfoFn != nil && registerFn != nil && unregisterFn != nil && sendCommandFn != nil
     }
@@ -83,10 +93,14 @@ final class MediaRemoteBridge: @unchecked Sendable {
     func register() {
         guard isAvailable else { return }
         registerFn?(.main)
+        // Must follow registration: tells MediaRemote this process actually
+        // wants change notifications, not just a one-off snapshot.
+        setWantsNotificationsFn?(true)
     }
 
     func unregister() {
         guard isAvailable else { return }
+        setWantsNotificationsFn?(false)
         unregisterFn?()
     }
 

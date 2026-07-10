@@ -136,8 +136,29 @@ public struct PomodoroSettings: Codable, Equatable, Sendable {
     public var autoStartFocus: Bool = false
     public var soundEnabled: Bool = true
     public var interruptionOnCompletion: Bool = true
+    /// Minute presets the Pomodoro Screen's +/- arrows step through (Focus
+    /// and Break each snap to the nearest preset, then move up/down the
+    /// list). Editable in Settings.
+    public var durationPresetsMinutes: [Int] = [5, 15, 25, 30, 50]
 
     public init() {}
+
+    /// Tolerant decode: a settings file written before `durationPresetsMinutes`
+    /// existed (or any other field here) must still decode instead of
+    /// throwing and resetting the whole settings file to defaults.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = PomodoroSettings()
+        focusDuration = try c.decodeIfPresent(TimeInterval.self, forKey: .focusDuration) ?? d.focusDuration
+        shortBreakDuration = try c.decodeIfPresent(TimeInterval.self, forKey: .shortBreakDuration) ?? d.shortBreakDuration
+        longBreakDuration = try c.decodeIfPresent(TimeInterval.self, forKey: .longBreakDuration) ?? d.longBreakDuration
+        sessionsBeforeLongBreak = try c.decodeIfPresent(Int.self, forKey: .sessionsBeforeLongBreak) ?? d.sessionsBeforeLongBreak
+        autoStartBreak = try c.decodeIfPresent(Bool.self, forKey: .autoStartBreak) ?? d.autoStartBreak
+        autoStartFocus = try c.decodeIfPresent(Bool.self, forKey: .autoStartFocus) ?? d.autoStartFocus
+        soundEnabled = try c.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? d.soundEnabled
+        interruptionOnCompletion = try c.decodeIfPresent(Bool.self, forKey: .interruptionOnCompletion) ?? d.interruptionOnCompletion
+        durationPresetsMinutes = try c.decodeIfPresent([Int].self, forKey: .durationPresetsMinutes) ?? d.durationPresetsMinutes
+    }
 }
 
 // MARK: - Battery

@@ -155,7 +155,7 @@ struct NowPlayingArbitrationTests {
         #expect(music.performed.isEmpty)
     }
 
-    @Test func trackChangeEmitsPassiveInterruptionButNotOnFirstObservation() {
+    @Test func trackChangeNeverEmitsAnInterruption() {
         let clock = TestClock()
         let music = FakeSource(kind: .appleMusic)
         let provider = NowPlayingProvider(sources: [music], scheduler: clock, timeSource: clock)
@@ -164,12 +164,11 @@ struct NowPlayingArbitrationTests {
         provider.start()
 
         music.onStateChange?(MediaState(title: "First", playbackState: .playing, source: .appleMusic))
-        #expect(emitted.isEmpty) // already-playing track at launch is not announced
-
         music.onStateChange?(MediaState(title: "Second", playbackState: .playing, source: .appleMusic))
-        #expect(emitted.count == 1)
-        #expect(emitted.first?.priority == .passive)
-        #expect(emitted.first?.title == "Second")
+
+        // Track changes are natural — no notch notification/dismiss prompt.
+        #expect(emitted.isEmpty)
+        #expect(provider.state?.title == "Second")
     }
 
     @Test func startupRetriesSnapshotUntilStateIsKnown() {

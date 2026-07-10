@@ -342,6 +342,12 @@ struct PomodoroPane: View {
                         in: 2...8
                     )
                 }
+                Section("Quick Durations") {
+                    DurationPresetsEditor()
+                    Text("Minute presets the +/- arrows beside the Pomodoro ring step through, for Focus and Break.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 Section("Flow") {
                     Toggle("Auto-start break", isOn: settingsBinding(settings, \.pomodoro.autoStartBreak))
                     Toggle("Auto-start focus", isOn: settingsBinding(settings, \.pomodoro.autoStartFocus))
@@ -361,6 +367,41 @@ struct PomodoroPane: View {
             get: { minutes },
             set: { newValue in settings.update { $0[keyPath: keyPath] = TimeInterval(newValue * 60) } }
         ), in: range)
+    }
+}
+
+/// Free-text "5, 15, 25, 30, 50" editor for the preset pool. Uses a local
+/// draft buffer rather than binding straight to Settings, so reformatting
+/// the committed value (sorted, deduped) doesn't fight the user mid-keystroke.
+private struct DurationPresetsEditor: View {
+    @EnvironmentObject var settings: SettingsStore
+    @State private var draft: String = ""
+
+    var body: some View {
+        TextField("e.g. 5, 15, 25, 30, 50", text: $draft)
+            .textFieldStyle(.roundedBorder)
+            .onAppear { draft = formatted(settings.settings.pomodoro.durationPresetsMinutes) }
+            .onSubmit(commit)
+            .onChange(of: settings.settings.pomodoro.durationPresetsMinutes) { _, newValue in
+                draft = formatted(newValue)
+            }
+    }
+
+    private func formatted(_ minutes: [Int]) -> String {
+        minutes.sorted().map(String.init).joined(separator: ", ")
+    }
+
+    private func commit() {
+        let values = Set(
+            draft.split(separator: ",")
+                .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+                .filter { $0 > 0 }
+        )
+        guard !values.isEmpty else {
+            draft = formatted(settings.settings.pomodoro.durationPresetsMinutes)
+            return
+        }
+        settings.update { $0.pomodoro.durationPresetsMinutes = Array(values) }
     }
 }
 

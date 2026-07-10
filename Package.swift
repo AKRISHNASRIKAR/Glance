@@ -21,7 +21,8 @@ let package = Package(
         .executableTarget(
             name: "Glance",
             dependencies: ["GlanceKit"],
-            path: "Sources/Glance"
+            path: "Sources/Glance",
+            resources: [.copy("Resources/MenuBarIcon.pdf")]
         ),
         .testTarget(
             name: "GlanceKitTests",

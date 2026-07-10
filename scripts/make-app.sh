@@ -22,6 +22,13 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 cp .build/release/Glance "$APP/Contents/MacOS/Glance"
+cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+
+# SwiftPM resource bundle (menu bar glyph) — Bundle.module looks for this
+# next to the executable's bundle at runtime.
+if [[ -d .build/release/Glance_Glance.bundle ]]; then
+    cp -R .build/release/Glance_Glance.bundle "$APP/Contents/Resources/Glance_Glance.bundle"
+fi
 
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -36,6 +43,8 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <string>Glance</string>
     <key>CFBundleDisplayName</key>
     <string>Glance</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
