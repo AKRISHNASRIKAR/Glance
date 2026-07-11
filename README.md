@@ -182,7 +182,7 @@ Engines are testable without rendering the notch: schedulers and clocks are inje
 
 ## Distribution & Release Process
 
-Releases are produced by `.github/workflows/release.yml` on `v*` tags: test → build → sign (Developer ID) → notarize → staple → DMG/ZIP → checksums → GitHub Release. Signing and notarization use repository secrets; without them the workflow produces clearly-marked unsigned drafts. Maintainer steps: [docs/RELEASING.md](docs/RELEASING.md).
+Releases are produced by `.github/workflows/release.yml` on `v*` tags: test → build → sign (Developer ID) → notarize → staple → DMG/ZIP → checksums → GitHub prerelease. Signing and notarization use repository secrets; without them the workflow produces clearly-marked unsigned drafts. Maintainer steps: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Roadmap
 

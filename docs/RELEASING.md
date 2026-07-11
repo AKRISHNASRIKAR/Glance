@@ -3,6 +3,7 @@
 ## Versioning
 
 Semantic Versioning, tags `vMAJOR.MINOR.PATCH` (`v0.1.0`, `v0.2.0`, `v1.0.0`).
+For now, `v0.x.y` releases are treated as GitHub prereleases.
 
 ## Automated pipeline
 
@@ -15,7 +16,7 @@ Pushing a `v*` tag runs `.github/workflows/release.yml`:
 4. `notarytool submit --wait` + `stapler staple`
 5. `scripts/make-dmg.sh` — DMG (with /Applications shortcut), ZIP, SHA-256
    checksums
-6. GitHub Release with the artifacts. **Unsigned builds are published as
+6. GitHub prerelease with the artifacts. **Unsigned builds are published as
    drafts only** — the workflow never fakes signing.
 
 ## Required repository secrets
