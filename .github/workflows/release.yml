@@ -25,6 +25,13 @@ permissions:
 jobs:
   release:
     runs-on: macos-15
+    env:
+      MACOS_CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
+      MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+      CODESIGN_IDENTITY: ${{ secrets.CODESIGN_IDENTITY }}
+      NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+      NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+      NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
     steps:
       - uses: actions/checkout@v7
 
@@ -38,11 +45,14 @@ jobs:
         run: swift test
 
       - name: Import signing certificate
-        if: ${{ secrets.MACOS_CERTIFICATE_P12 != '' }}
         env:
-          CERT_P12: ${{ secrets.MACOS_CERTIFICATE_P12 }}
-          CERT_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          CERT_P12: ${{ env.MACOS_CERTIFICATE_P12 }}
+          CERT_PASSWORD: ${{ env.MACOS_CERTIFICATE_PASSWORD }}
         run: |
+          if [[ -z "$CERT_P12" ]]; then
+            echo "Skipping certificate import; no signing certificate configured."
+            exit 0
+          fi
           KEYCHAIN=build.keychain
           KEYCHAIN_PASSWORD=$(uuidgen)
           echo "$CERT_P12" | base64 --decode > cert.p12
@@ -55,16 +65,19 @@ jobs:
 
       - name: Build app bundle
         env:
-          CODESIGN_IDENTITY: ${{ secrets.CODESIGN_IDENTITY }}
+          CODESIGN_IDENTITY: ${{ env.CODESIGN_IDENTITY }}
         run: scripts/make-app.sh
 
       - name: Notarize and staple
-        if: ${{ secrets.NOTARY_APPLE_ID != '' }}
         env:
-          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
-          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
-          NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
+          NOTARY_APPLE_ID: ${{ env.NOTARY_APPLE_ID }}
+          NOTARY_TEAM_ID: ${{ env.NOTARY_TEAM_ID }}
+          NOTARY_PASSWORD: ${{ env.NOTARY_PASSWORD }}
         run: |
+          if [[ -z "$NOTARY_APPLE_ID" ]]; then
+            echo "Skipping notarization; no App Store Connect credentials configured."
+            exit 0
+          fi
           ditto -c -k --keepParent dist/Glance.app dist/notarize.zip
           xcrun notarytool submit dist/notarize.zip \
             --apple-id "$NOTARY_APPLE_ID" \
@@ -81,7 +94,7 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           # Unsigned builds stay drafts; signed+notarized builds publish.
-          draft: ${{ secrets.CODESIGN_IDENTITY == '' }}
+          draft: ${{ env.CODESIGN_IDENTITY == '' }}
           prerelease: true
           generate_release_notes: true
           files: |
