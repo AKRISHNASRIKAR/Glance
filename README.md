@@ -1,6 +1,5 @@
 <p align="center">
-  <!-- Logo placeholder: add assets/logo.png (512×512) -->
-  <img src="assets/logo.png" alt="Glance" width="96" onerror="this.style.display='none'" />
+  <img src="assets/logo.png" alt="Glance" width="120" />
 </p>
 
 <h1 align="center">Glance</h1>
@@ -26,16 +25,22 @@ It is not a Dynamic Island clone, not a notification replacement, and not a dash
 
 ## Product Preview
 
-<!-- Screenshot placeholders — no fake screenshots are committed.
-     Capture real ones and place them at these paths: -->
+<p align="center">
+  <img src="assets/screenshots/now-playing-artwork.png" alt="Now Playing, Artwork appearance — blurred album art fills the expanded screen, transport controls centered on the notch" width="640" />
+  <br /><sub>Now Playing — Artwork appearance</sub>
+</p>
 
-| | |
-|---|---|
-| Now Playing (Minimal) | `assets/screenshots/now-playing-minimal.png` |
-| Now Playing (Artwork) | `assets/screenshots/now-playing-artwork.png` |
-| Pomodoro | `assets/screenshots/pomodoro.png` |
-| Claude Code interruption | `assets/screenshots/claude-interruption.png` |
-| Settings — Notch Screens | `assets/screenshots/settings-screens.png` |
+<p align="center">
+  <img src="assets/screenshots/pomodoro.png" alt="Pomodoro screen — ring timer, +/- duration arrows, Focus/Break selector" width="640" />
+  <br /><sub>Pomodoro — the ring, the +/- arrows for quick duration changes, Focus / Break</sub>
+</p>
+
+<p align="center">
+  <img src="assets/screenshots/menu-bar-icon.png" alt="Glance's menu bar icon — a notch-shaped pill with a live-indicator dot" height="44" />
+  <br /><sub>The menu bar icon — a notch, with the same "device active" dot real hardware shows beside it</sub>
+</p>
+
+More screenshots (Minimal appearance, a Claude Code interruption, the Settings window) are welcome as contributions — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Available Now
 
@@ -44,15 +49,17 @@ It is not a Dynamic Island clone, not a notification replacement, and not a dash
 - Notch surface with four states: idle, peek, live, expanded
 - Horizontal Screen system — swipe, ⌘←/⌘→, or click the chevrons
 - Screen configuration: add, remove, reorder, enable/disable (persisted)
-- **Now Playing** for Apple Music and Spotify — Minimal and Artwork appearances, adaptive artwork contrast, crossfading backgrounds, real playback progress
+- **Now Playing** for Apple Music and Spotify — Minimal and Artwork appearances, adaptive artwork contrast, crossfading backgrounds, real playback progress; transport controls centered on the notch itself, not just the artwork column. Track changes update in place — no notification, no dismiss prompt.
+- Auto-recovers already-playing media after sleep/wake or a relaunch — distributed notifications can be silently dropped by both, so Glance re-syncs on wake and on reactivation instead of trusting notifications alone
 - Optional **System-wide Now Playing** (Experimental) — any app, including browser tabs, via a private Apple framework; off by default, clearly labeled
-- **Pomodoro** — focus/break cycles, long breaks, auto-start options, completion interruptions
+- **Pomodoro** — focus/break cycles, long breaks, auto-start options, completion interruptions, and +/- arrows beside the ring that step through a Settings-configurable duration pool (5/15/25/30/50 min by default) without opening Settings
 - Interruption engine: priority preemption, debouncing, expiry, persistent events, return-to-previous-screen
 - Optional **Battery & Charging** events (charger, 80%, full, low, critical)
 - Optional **Network Activity** (threshold-based throughput, connection lost/restored)
 - Optional **Context Awareness** foundation with local history and retention controls
 - Optional **Coding Activity** screen (time + current editor)
-- **Claude Code integration** via official hooks: needs-input / permission / completed interruptions and an optional status screen
+- **Claude Code integration** via official hooks: needs-input / permission / completed interruptions and an optional status screen — live activity uses Claude's own accent color and mark, not a generic system glyph
+- Custom app icon and menu bar glyph — a notch-shaped mark with a centered "live" dot, generated as vector art (`scripts/generate-icons.swift`) rather than shipped as opaque binary assets
 - Privacy: local-first analysis, Never Track list, prompt contents never touch disk
 - Multi-display: physical-notch first, compact top-center surface on other displays
 
@@ -105,7 +112,7 @@ Supported sources: **Apple Music** and **Spotify** via fully public/documented m
 
 ## Pomodoro
 
-Focus · 25:00 · Start. That's the whole interface. Durations, long-break cadence, auto-start, sound, and the completion interruption are configurable in Settings.
+Focus · 25:00 · Start. That's the whole interface. Durations, long-break cadence, auto-start, sound, and the completion interruption are configurable in Settings — and while idle, the +/- arrows beside the ring step through a quick-duration pool (5/15/25/30/50 min by default, editable in Settings → Pomodoro → Quick Durations) so you rarely need to leave the notch to change how long a session runs.
 
 ## Optional Context Awareness
 
@@ -150,8 +157,8 @@ Deep dive: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 ## Build From Source
 
 ```bash
-git clone <this repository>
-cd glance
+git clone https://github.com/AKRISHNASRIKAR/Glance.git
+cd Glance
 make app        # builds dist/Glance.app (ad-hoc signed)
 open dist/Glance.app
 ```
@@ -163,7 +170,7 @@ open dist/Glance.app
 
 ## Configuration
 
-All settings live in the Settings window (menu bar ✨ icon → Settings…). They persist as versioned, typed JSON at `~/Library/Application Support/Glance/settings.json` — no scattered UserDefaults keys.
+All settings live in the Settings window (menu bar icon → Settings…). They persist as versioned, typed JSON at `~/Library/Application Support/Glance/settings.json` — no scattered UserDefaults keys.
 
 ## Testing
 
