@@ -7,3 +7,7 @@
 .activity{margin:calc(-32 * var(--u)) auto 0}
 @media(max-width:760px){.macbook .desktop{border:0;border-radius:0}.desktop-caption{display:none}}
 .macbook{clip-path:polygon(8.1% 0,91.7% 0,91.7% 95%,100% 95%,100% 100%,0 100%,0 95%,8.1% 95%)}
+
+/* Soft sage wallpaper echoes the landing page's paper and olive palette. */
+.macbook .desktop{background:radial-gradient(ellipse at 85% 110%,#d4d4a2 0,transparent 50%),radial-gradient(ellipse at 15% 100%,#8b9d7d 0,transparent 60%),linear-gradient(135deg,#687d67,#b6bfa0 70%,#d9d4b6)}
+.desktop-menu{background:#f4f5e51a;color:#f6f7ed}
