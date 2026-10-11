@@ -132,16 +132,20 @@ public struct NowPlayingSettings: Codable, Equatable, Sendable {
 public enum PomodoroAppearance: String, Codable, CaseIterable, Sendable {
     case classic
     case minimal
-    case compact
-    case ambient
     case artwork
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let value = try container.decode(String.self)
+        if value == "ambient" || value == "compact" { self = .classic }
+        else if let appearance = Self(rawValue: value) { self = appearance }
+        else { throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unknown Pomodoro appearance") }
+    }
 
     public var displayName: String {
         switch self {
         case .classic: return "Classic"
         case .minimal: return "Minimal"
-        case .compact: return "Compact"
-        case .ambient: return "Ambient"
         case .artwork: return "Artwork"
         }
     }
@@ -150,8 +154,6 @@ public enum PomodoroAppearance: String, Codable, CaseIterable, Sendable {
         switch self {
         case .classic: return "The balanced default — ring, phase, and controls."
         case .minimal: return "Almost entirely typography. Nothing extra."
-        case .compact: return "Smaller footprint for a tighter notch."
-        case .ambient: return "Nearly invisible. Just the time."
         case .artwork: return "A soft, translucent color wash behind the timer."
         }
     }
@@ -170,7 +172,7 @@ public struct PomodoroSettings: Codable, Equatable, Sendable {
     /// Minute presets the Pomodoro Screen's +/- arrows step through (Focus
     /// and Break each snap to the nearest preset, then move up/down the
     /// list). Editable in Settings.
-    public var durationPresetsMinutes: [Int] = [5, 15, 25, 30, 50]
+    public var durationPresetsMinutes: [Int] = [5, 15, 25, 50]
     /// Which renderer draws the Pomodoro Screen. Presentational only —
     /// switching this never touches the timer engine's state.
     public var appearance: PomodoroAppearance = .classic

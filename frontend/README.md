@@ -27,3 +27,9 @@ The hero uses an original CSS illustration inspired by the 13-inch M4 MacBook Ai
 The MacBook notch preview follows the current SwiftUI source: 480-point expanded width, a 32-point illustrated sensor row, 128-point content area, 22-point bottom corners, 82-point album artwork, centered transport controls, and the app’s chevron/dot pager. The selected examples are Now Playing (Artwork), Pomodoro (Classic), and Claude Code (needs-input state). Claude is optional in the app.
 
 `native-preview.css` maps native points to container-relative units. Match future app changes against `NotchGeometry.swift`, `NowPlayingScreenView.swift`, `PomodoroUIKit.swift`, `ClassicPomodoroRenderer.swift`, `ClaudeCodeScreenView.swift`, and `ExpandedContentView.swift`. The browser recreation uses equivalent web glyphs, not Apple SF Symbols; native rendering and browser rendering are not pixel-identical. Media artwork and track details come from the repository screenshot.
+
+## Motion
+
+`motion.css` adds section reveals, preview transitions, button feedback, and a breathing timer halo. The timer arc reflects elapsed demo time; pulsing represents a running state, not progress. Native Classic and Artwork Pomodoro use an 88-point ring and animated rounded numeric text. Site and native animations respect Reduce Motion, and timer breathing stops when paused.
+
+The hosted Pomodoro preview now matches the centered Classic layout, with full-notch sage/plum focus and blue/plum rest gradients. Claude uses a full-notch terracotta/plum background.

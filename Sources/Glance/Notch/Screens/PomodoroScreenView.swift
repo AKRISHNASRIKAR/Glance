@@ -24,10 +24,6 @@ struct PomodoroScreenView: View {
                 ClassicPomodoroRenderer(state: state, actions: actions, reduceMotion: reduceMotion)
             case .minimal:
                 MinimalPomodoroRenderer(state: state, actions: actions, reduceMotion: reduceMotion)
-            case .compact:
-                CompactPomodoroRenderer(state: state, actions: actions, reduceMotion: reduceMotion)
-            case .ambient:
-                AmbientPomodoroRenderer(state: state, actions: actions, reduceMotion: reduceMotion)
             case .artwork:
                 ArtworkPomodoroRenderer(state: state, actions: actions, reduceMotion: reduceMotion)
             }

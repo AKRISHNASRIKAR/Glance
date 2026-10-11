@@ -1,0 +1,23 @@
+/* Native Pomodoro refresh: 88pt orbit, rounded tabular digits, phase accents. */
+.native-pomodoro{--phase-accent:#ffa663;top:calc(42 * var(--u));height:calc(88 * var(--u))}
+.native-pomodoro[data-phase=break]{--phase-accent:#6ed9b8}
+.native-ring{width:calc(88 * var(--u));height:calc(88 * var(--u));border:0}
+.native-ring:before{display:none}
+.timer-orbit{position:absolute;inset:0;overflow:visible;width:100%;height:100%;transform:rotate(-90deg)}
+.timer-orbit circle{fill:none;stroke-width:4;stroke-linecap:round}
+.orbit-track{stroke:#ffffff1a}.orbit-progress{stroke:var(--phase-accent);stroke-dasharray:1;stroke-dashoffset:.996;transition:stroke-dashoffset .8s ease,stroke .3s}
+.native-timer-type{display:flex;flex-direction:column;align-items:center;gap:calc(3 * var(--u))}
+.native-ring .native-timer-type span{font-family:ui-rounded,'SF Pro Rounded',-apple-system,sans-serif;font-size:calc(21 * var(--u));letter-spacing:calc(-.6 * var(--u));font-weight:500;line-height:1.2}
+.native-timer-type small{font-size:calc(7 * var(--u));letter-spacing:calc(1.1 * var(--u));font-weight:600;color:var(--phase-accent)}
+.native-phases{flex-wrap:wrap}.idle-session-track{flex-basis:100%;display:flex;gap:calc(3 * var(--u));margin-top:calc(5 * var(--u))}.idle-session-track i{width:calc(9 * var(--u));height:calc(3.5 * var(--u));border-radius:10px;background:#ffffff24}.native-timer-actions{margin-top:calc(10 * var(--u))}.native-running>i{background:var(--phase-accent)!important}
+.native-pomodoro[data-state=running] .timer-orbit{filter:drop-shadow(0 0 calc(4 * var(--u)) color-mix(in srgb,var(--phase-accent) 45%,transparent))}
+.button,.header-download{transition:transform .25s,box-shadow .25s,background .25s}.button:hover,.header-download:hover{box-shadow:0 7px 20px #20332120;transform:translateY(-2px)}.button:active{transform:translateY(0) scale(.98)}
+.preview-controls button{transition:background .25s,color .25s,box-shadow .25s}.feature-art{transition:transform .4s,box-shadow .4s}.feature-grid article:hover .feature-art{transform:translateY(-4px);box-shadow:0 12px 26px #1c302110}
+@media(prefers-reduced-motion:no-preference){
+.motion-reveal{opacity:0;transform:translateY(22px);transition:opacity .7s var(--reveal-delay,0ms),transform .7s cubic-bezier(.2,.7,.2,1) var(--reveal-delay,0ms)}.motion-reveal.revealed{opacity:1;transform:translateY(0)}
+.native-pomodoro[data-state=running] .native-ring:after{content:'';position:absolute;inset:-4%;border:calc(2 * var(--u)) solid var(--phase-accent);border-radius:50%;opacity:.12;filter:blur(calc(4 * var(--u)));animation:timer-breathe 4s ease-in-out infinite;pointer-events:none}
+@keyframes timer-breathe{0%,100%{transform:scale(1);opacity:.08}50%{transform:scale(1.035);opacity:.25}}
+.stage-backdrop:after{animation:backdrop-breathe 14s ease-in-out infinite alternate}@keyframes backdrop-breathe{from{opacity:.2}to{opacity:.38}}
+.sound-art i{animation:equalizer-drift 2.2s ease-in-out infinite alternate;transform-origin:center}.sound-art i:nth-child(2n){animation-delay:-.8s}.sound-art i:nth-child(3n){animation-delay:-1.6s}@keyframes equalizer-drift{from{transform:scaleY(.65)}to{transform:scaleY(1)}}
+}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.motion-reveal{opacity:1;transform:none}}

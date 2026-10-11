@@ -1,106 +1,23 @@
-# Pomodoro
+# Pomodoro UI
 
-## Architecture: one engine, many renderers
+The native timer has three appearances:
 
-```
-PomodoroEngine (timer logic — the only place it exists)
-        │
-        ▼
-PomodoroDisplayState + PomodoroActions   (Sources/Glance/Notch/Screens/Pomodoro/PomodoroDisplayState.swift)
-        │
-        ▼
-PomodoroScreenView (dispatcher, switches on PomodoroSettings.appearance)
-        │
-        ├── ClassicPomodoroRenderer
-        ├── MinimalPomodoroRenderer
-        ├── CompactPomodoroRenderer
-        ├── AmbientPomodoroRenderer
-        └── ArtworkPomodoroRenderer
-```
+- **Classic:** centered ring with the countdown inside, phase controls above, duration adjustment on the left, Start/Pause/Resume on the right, and session dots below. All content clears the bottom page-navigation strip.
+- **Artwork:** the same centered layout over a translucent phase-colored background. All Pomodoro appearances now share a full-notch phase gradient: sage/plum for focus, blue/plum for short rest, and lavender/plum for long rest.
+- **Minimal:** only the countdown at the true horizontal center, with duration arrows on either side and a separately aligned playback control at the right edge. Right-click for phase selection, reset, and skip-rest actions. Arrows select exactly 5, 15, 25, or 50 minutes and are disabled while running or paused.
 
-`PomodoroEngine` (`Sources/GlanceKit/Pomodoro/PomodoroEngine.swift`) is untouched
-by this system: phase, run state, remaining time, and progress are computed
-from wall-clock anchors exactly as before. No renderer reads it directly.
-`PomodoroDisplayState` and `PomodoroActions` read from it (`engine.phaseDuration`
-for "how long is the active phase", never re-deriving that switch themselves)
-rather than duplicating anything it already computes.
+Ambient and Compact have been retired. Existing saved values decode to Classic without resetting other Pomodoro settings.
 
-Each render, `PomodoroScreenView` builds two plain value types from the
-engine + settings:
+While running with the notch closed, focus and rest show a breathing progress orbit. Rainfall has been removed. Animation pauses with the timer and respects Reduce Motion. Decoration never changes timer progress or engine state.
 
-- **`PomodoroDisplayState`** — an immutable snapshot (phase, run state,
-  remaining, progress, session counts, phase color, the Artwork tint). Pure
-  data; a renderer's whole job is to lay this out.
-- **`PomodoroActions`** — closures (`start`, `pause`, `resume`, `reset`,
-  `skipBreak`, `selectPhase`, `adjustDuration`) that close over the engine
-  and `SettingsStore`. This is the *only* path through which any renderer
-  can affect the timer — none of them hold a reference to `PomodoroEngine`
-  or `SettingsStore` themselves.
+## Architecture
 
-`PomodoroPrimaryActionSpec` centralizes the one piece of UI-facing logic
-that isn't pure layout: what the main button says and does for the current
-run state (Start → Pause → Resume). Every renderer that has a primary
-button derives it from this instead of re-deriving the same switch
-statement five times.
+`PomodoroScreenView` builds one `PomodoroDisplayState` and `PomodoroActions` bundle from the existing engine. Each renderer receives those values; timer logic remains in `PomodoroEngine`.
 
-Classic and Artwork are both rich enough to want the same composite —
-stepper (idle) + ring + phase header + controls — so they share it via
-`PomodoroRingHeaderLayout` (`PomodoroUIKit.swift`), parameterized by accent
-color and a few size/opacity constants; each renderer is little more than
-that composite plus its own outer padding/background. Compact, Minimal, and
-Ambient are different enough in shape that they compose the smaller atoms
-directly instead.
+`ClassicPomodoroRenderer` supplies both Classic and Artwork foregrounds. `PomodoroRingView` owns the animated orbit. `PomodoroArtworkBackgroundView` renders the full expanded background from `NotchRootView`.
 
-## Adding a new appearance
+The phase selector, session track, duration stepper, and primary action mapping are shared. Classic and Artwork use the configured duration pool; Minimal supplies its fixed duration pool through the same action helper.
 
-1. Add a case to `PomodoroAppearance` (`Sources/GlanceKit/Settings/GlanceSettings.swift`).
-2. Write a new `SomethingPomodoroRenderer: View` taking `state: PomodoroDisplayState`
-   and `actions: PomodoroActions` (plus `reduceMotion: Bool` if it animates).
-   Build it from the shared atoms in `PomodoroUIKit.swift`
-   (`PomodoroRingView`, `PomodoroSessionTrack`, `PomodoroStepperPill`,
-   `PomodoroPhaseSelector`, `PomodoroControlsRow`) wherever they fit; write
-   new ones only for looks the existing atoms can't express.
-3. Add one switch arm in `PomodoroScreenView`.
+## Validation
 
-No engine or settings-persistence code needs to change — the new case
-round-trips through `PomodoroSettings.appearance`'s existing `Codable`
-conformance automatically.
-
-## The five appearances
-
-| Appearance | Idea | Distinguishing choice |
-|---|---|---|
-| Classic (default) | The balanced experience | Ring + text column, same grammar as Now Playing |
-| Minimal | Almost entirely typography | No ring at all — a hairline progress rule instead |
-| Compact | Smallest footprint | Icon-only controls, no stepper; usable at half notch width |
-| Ambient | Nearly invisible | Hairline ring at low opacity; controls fade in only on hover |
-| Artwork | Expressive | Full-bleed translucent color wash behind the whole notch shape |
-
-Design language shared across all five (matching the redesigned Now Playing
-screen): the same ring math and `AngularGradient` fill, the same session
-progress bars, the same button styles (`NotchCapsuleButtonStyle`,
-`NotchIconButton`), the same phase colors (orange/mint), the same
-reduce-motion handling. Nothing here uses dashboards, statistics,
-motivational text, neon color, or oversized shadows/glassmorphism.
-
-## Artwork's background
-
-Unlike Now Playing, there's no album art to derive a background from.
-`PomodoroArtworkBackgroundView` washes two large, heavily blurred circles of
-a phase-specific tint (cool blue for Focus, soft green for short break,
-purple for long break — `PomodoroDisplayState.artworkTint`) over black,
-under a fixed dark scrim for contrast. It's wired into
-`NotchRootView.fullBleedArtwork` alongside Now Playing's artwork
-background — the two are mutually exclusive since they're different
-Screens, so only one full-bleed background is ever active. The scrim is a
-fixed opacity rather than an adaptive per-pixel analysis (like artwork's
-`ArtworkAnalyzer`) — the three tints are known and bounded ahead of time,
-so there's nothing to analyze.
-
-## Settings
-
-Settings → Pomodoro → Appearance is a radio-button picker over
-`PomodoroAppearance.allCases`; the choice is `PomodoroSettings.appearance`,
-persisted like every other setting and applied live (the dispatcher reads
-it every render, so switching appearances updates the Screen immediately,
-no restart).
+Run `make test` for timer/provider/settings coverage, including migration of retired appearances. Run `make app` to build `dist/Glance.app`. Review the appearances at full and paired screen widths, and check active focus, active rest, pause, reset, and Reduce Motion.

@@ -7,7 +7,10 @@ function selectTab(tab) {
     document.getElementById(`screen-${item.dataset.screen}`).hidden = !selected;
   }
   document.getElementById('activity-panel').setAttribute('aria-labelledby', tab.id);
+  const screen = document.getElementById(`screen-${tab.dataset.screen}`);
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) screen.animate([{opacity:0, transform:'translateY(4px)'},{opacity:1, transform:'translateY(0)'}], {duration:280, easing:'cubic-bezier(.2,.7,.2,1)'});
   document.getElementById('activity-panel').classList.toggle('artwork-preview', tab.dataset.screen === 'music');
+  document.getElementById('activity-panel').dataset.screen = tab.dataset.screen;
   const index = tabs.indexOf(tab);
   document.querySelectorAll('.native-dots i').forEach((dot, i) => dot.classList.toggle('selected', i === index));
   document.getElementById('previous-screen').disabled = index === 0;
@@ -44,7 +47,7 @@ for (const [id, delta] of [['previous-screen', -1], ['next-screen', 1]]) {
   });
 }
 // A browser-local demo of the native Classic Pomodoro controls.
-const presets = [5, 15, 25, 30, 50];
+const presets = [5, 15, 25, 50];
 let phase = 'focus';
 let minutes = 25;
 let remaining = minutes * 60;
@@ -54,17 +57,21 @@ let interval;
 const timerButton = document.getElementById('timer-toggle');
 function renderTimer() {
   document.getElementById('timer-value').textContent = `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, '0')}`;
-  document.getElementById('duration-label').textContent = minutes;
+  document.getElementById('duration-label').textContent = `${minutes}m`;
   document.querySelector('.native-stepper').hidden = timerState !== 'idle';
   document.querySelector('.native-phases').hidden = timerState !== 'idle';
   document.querySelector('.native-running').hidden = timerState === 'idle';
-  document.querySelector('.native-running > span').textContent = phase === 'focus' ? 'FOCUS' : 'SHORT BREAK';
+  document.querySelector('.native-running > span').textContent = phase === 'focus' ? 'WORK MODE' : 'REST';
   document.getElementById('timer-reset').hidden = timerState === 'idle';
   document.getElementById('timer-skip').hidden = timerState !== 'idle' || phase === 'focus';
-  timerButton.textContent = timerState === 'idle' ? '▶ Start' : timerState === 'running' ? 'Ⅱ Pause' : '▶ Resume';
+  timerButton.textContent = timerState === 'running' ? 'Ⅱ' : '▶';
+  timerButton.setAttribute('aria-label', `${timerState === 'idle' ? 'Start' : timerState === 'running' ? 'Pause' : 'Resume'} demo timer`);
   document.querySelectorAll('[data-phase]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.phase === phase)));
   document.querySelector('.native-pomodoro').dataset.phase = phase;
-  document.querySelector('.native-ring').style.borderTopColor = timerState === 'idle' ? '#ffffff1a' : phase === 'focus' ? '#ff9500' : '#30d158';
+  document.getElementById('activity-panel').dataset.phase = phase;
+  document.querySelector('.native-pomodoro').dataset.state = timerState;
+  document.getElementById('timer-phase-label').textContent = timerState === 'paused' ? 'PAUSED' : phase === 'focus' ? 'WORK MODE' : 'REST';
+  document.querySelector('.orbit-progress').style.strokeDashoffset = 1 - Math.max(0.004, Math.min(1, 1 - remaining / (minutes * 60)));
 }
 function resetTimer() {
   clearInterval(interval);
@@ -109,3 +116,22 @@ for (const button of document.querySelectorAll('[data-transport]')) {
   });
 }
 renderTimer();
+
+// Reveal once, with readable fallbacks when motion is disabled or unavailable.
+const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+if (!motionPreference.matches && 'IntersectionObserver' in window) {
+  const revealTargets = document.querySelectorAll('.section-intro, .feature-grid article, .principles > div, .get-started');
+  const observer = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) { entry.target.classList.add('revealed'); observer.unobserve(entry.target); }
+    }
+  }, {threshold:0.12});
+  revealTargets.forEach((element, index) => {
+    element.classList.add('motion-reveal');
+    element.style.setProperty('--reveal-delay', `${index % 3 * 70}ms`);
+    observer.observe(element);
+  });
+  motionPreference.addEventListener('change', event => {
+    if (event.matches) { revealTargets.forEach(element => element.classList.add('revealed')); observer.disconnect(); }
+  });
+}

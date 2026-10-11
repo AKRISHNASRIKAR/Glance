@@ -19,23 +19,39 @@ struct PomodoroRingView: View {
     var reduceMotion: Bool = false
 
     var body: some View {
-        ZStack {
-            Circle().stroke(Color.white.opacity(trackOpacity), lineWidth: lineWidth)
-            Circle()
-                .trim(from: 0, to: max(progress, 0.004))
-                .stroke(
-                    AngularGradient(
-                        colors: [color.opacity(0.55), color],
-                        center: .center,
-                        startAngle: .degrees(0),
-                        endAngle: .degrees(360 * max(progress, 0.004))
-                    ),
-                    style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-                .shadow(color: color.opacity(glow ? 0.55 : 0), radius: 5)
-                .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: progress)
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !glow || reduceMotion)) { timeline in
+            let pulse = glow && !reduceMotion
+                ? (sin(timeline.date.timeIntervalSinceReferenceDate * .pi / 2) + 1) / 2
+                : 0.0
+            GeometryReader { proxy in
+                let diameter = min(proxy.size.width, proxy.size.height)
+                let radius = diameter / 2
+                let fraction = min(max(progress, 0.004), 1)
+                let angle = fraction * 2 * .pi - .pi / 2
+                ZStack {
+                    Circle()
+                        .stroke(color.opacity(glow ? 0.08 + pulse * 0.06 : 0), lineWidth: lineWidth + 5)
+                        .blur(radius: 4)
+                        .scaleEffect(1 + pulse * 0.035)
+                    Circle().stroke(Color.white.opacity(trackOpacity), lineWidth: lineWidth)
+                    Circle()
+                        .trim(from: 0, to: fraction)
+                        .stroke(
+                            AngularGradient(colors: [color.opacity(0.45), color], center: .center),
+                            style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                        )
+                        .rotationEffect(.degrees(-90))
+                        .shadow(color: color.opacity(glow ? 0.3 + pulse * 0.25 : 0), radius: 4 + pulse * 3)
+                    Circle()
+                        .fill(color)
+                        .frame(width: lineWidth + 1, height: lineWidth + 1)
+                        .shadow(color: color.opacity(glow ? 0.8 : 0), radius: 5)
+                        .position(x: radius + radius * cos(angle), y: radius + radius * sin(angle))
+                }
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.8), value: progress)
+            }
         }
+        .accessibilityHidden(true)
     }
 }
 
@@ -108,10 +124,16 @@ struct PomodoroPhaseSelector: View {
     let onSelect: (PomodoroPhase) -> Void
 
     var body: some View {
-        HStack(spacing: 4) {
-            chip("Focus", isSelected: phase == .focus) { onSelect(.focus) }
-            chip("Break", isSelected: phase != .focus) { onSelect(.shortBreak) }
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 4) { phaseChips }
+            VStack(alignment: .leading, spacing: 4) { phaseChips }
         }
+    }
+
+    @ViewBuilder
+    private var phaseChips: some View {
+        chip("Focus", isSelected: phase == .focus) { onSelect(.focus) }
+        chip("Break", isSelected: phase != .focus) { onSelect(.shortBreak) }
     }
 
     private func chip(_ title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
@@ -122,6 +144,7 @@ struct PomodoroPhaseSelector: View {
                 .padding(.horizontal, 11)
                 .padding(.vertical, 4)
                 .background(Capsule().fill(isSelected ? Color.white.opacity(0.92) : Color.white.opacity(0.1)))
+                .fixedSize(horizontal: true, vertical: false)
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
@@ -149,7 +172,7 @@ struct PomodoroRingHeaderLayout: View {
     var body: some View {
         HStack(alignment: .center, spacing: 16) {
             ringZone
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 10) {
                 header
                 PomodoroControlsRow(state: state, actions: actions)
             }
@@ -171,9 +194,21 @@ struct PomodoroRingHeaderLayout: View {
                     glow: glow,
                     reduceMotion: reduceMotion
                 )
-                Text(state.timeText)
-                    .font(.system(size: 17, weight: .semibold, design: .rounded).monospacedDigit())
-                    .foregroundStyle(.white)
+                VStack(spacing: 3) {
+                    Text(state.timeText)
+                        .font(.system(size: 21, weight: .medium, design: .rounded).monospacedDigit())
+                        .tracking(-0.6)
+                        .foregroundStyle(.white)
+                        .contentTransition(.numericText(countsDown: true))
+                        .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: state.timeText)
+                        .minimumScaleFactor(0.7)
+                        .lineLimit(1)
+                    Text(state.runState == .paused ? "PAUSED" : state.phase.displayName.uppercased())
+                        .font(.system(size: 7, weight: .semibold))
+                        .tracking(1.1)
+                        .foregroundStyle(accentColor.opacity(0.8))
+                }
+                .padding(.horizontal, 4)
             }
             .frame(width: ringSize, height: ringSize)
             .accessibilityLabel("\(state.phase.displayName), \(state.timeText) remaining")
@@ -183,7 +218,10 @@ struct PomodoroRingHeaderLayout: View {
     private var header: some View {
         Group {
             if state.runState == .idle {
-                PomodoroPhaseSelector(phase: state.phase, onSelect: actions.selectPhase)
+                VStack(alignment: .leading, spacing: 9) {
+                    PomodoroPhaseSelector(phase: state.phase, onSelect: actions.selectPhase)
+                    PomodoroSessionTrack(total: state.sessionsBeforeLongBreak, filled: state.filledSessions, color: accentColor)
+                }
             } else {
                 HStack(spacing: 7) {
                     Circle().fill(accentColor).frame(width: 5, height: 5)

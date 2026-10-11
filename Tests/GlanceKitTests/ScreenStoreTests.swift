@@ -269,9 +269,9 @@ struct SettingsStoreTests {
 
         let url = makeTempDirectory().appendingPathComponent("settings.json")
         let store = SettingsStore(fileURL: url, scheduler: TestClock())
-        store.update { $0.pomodoro.appearance = .ambient }
+        store.update { $0.pomodoro.appearance = .artwork }
         store.saveNow()
         let reloaded = SettingsStore(fileURL: url, scheduler: TestClock())
-        #expect(reloaded.settings.pomodoro.appearance == .ambient)
+        #expect(reloaded.settings.pomodoro.appearance == .artwork)
     }
 }

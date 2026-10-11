@@ -12,19 +12,6 @@ struct ArtworkPomodoroRenderer: View {
     var reduceMotion: Bool = false
 
     var body: some View {
-        PomodoroRingHeaderLayout(
-            state: state,
-            actions: actions,
-            accentColor: .white,
-            ringSize: 78,
-            lineWidth: 4.5,
-            trackOpacity: 0.18,
-            labelOpacity: 0.85,
-            reduceMotion: reduceMotion
-        )
-        .padding(.horizontal, 20)
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: state.phase)
+        ClassicPomodoroRenderer(state: state, actions: actions, reduceMotion: reduceMotion)
     }
 }

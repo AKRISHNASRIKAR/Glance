@@ -9,3 +9,16 @@ extension Color {
     /// live Claude Code activity.
     static let claudeAccent = Color(red: 0.851, green: 0.467, blue: 0.341)
 }
+
+/// Fills the complete notch shape, including its sensor row.
+struct ClaudeBackgroundView: View {
+    var body: some View {
+        LinearGradient(
+            colors: [Color.claudeAccent.opacity(0.23), Color(red: 0.055, green: 0.035, blue: 0.055), Color(red: 0.18, green: 0.14, blue: 0.26).opacity(0.6)],
+            startPoint: .topLeading, endPoint: .bottomTrailing
+        )
+        .background(Color.black)
+        .accessibilityHidden(true)
+        .allowsHitTesting(false)
+    }
+}

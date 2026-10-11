@@ -1,0 +1,18 @@
+/* Full-notch phase gradients, matching the native app's palette. */
+.activity[data-screen=focus]{background:linear-gradient(135deg,rgba(107,168,133,.36),#0b1211,rgba(46,36,66,.65)),#000}
+.activity[data-screen=focus][data-phase=break]{background:linear-gradient(135deg,rgba(107,163,199,.36),#0b1211,rgba(46,36,66,.65)),#000}
+.activity[data-screen=claude]{background:linear-gradient(135deg,rgba(217,119,87,.23),#0e090e,rgba(46,36,66,.6)),#000}
+.native-pomodoro{top:calc(36 * var(--u));height:auto;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:calc(4 * var(--u));--phase-accent:#a8c9a6}
+.native-pomodoro[data-phase=break]{--phase-accent:#b0cfdb}
+.native-phases{height:calc(12 * var(--u));gap:calc(12 * var(--u));flex-wrap:nowrap;align-items:center}
+.native-phases button,.native-phases button[aria-pressed=true]{padding:0;background:none;border-radius:0;font-size:calc(8.5 * var(--u));font-weight:500;color:#ffffff59}
+.native-phases button[aria-pressed=true]{color:var(--phase-accent)}
+.centered-timer-row{display:flex;align-items:center;gap:calc(16 * var(--u))}
+.native-ring{width:calc(72 * var(--u));height:calc(72 * var(--u))}
+.native-ring .native-timer-type span{font-size:calc(22 * var(--u));font-weight:500;letter-spacing:calc(-.8 * var(--u))}
+.native-timer-type small{font-size:calc(6.5 * var(--u));letter-spacing:calc(1.2 * var(--u))}
+.timer-orbit circle{stroke-width:3.5}.native-stepper{width:calc(28 * var(--u));background:none;padding:0;gap:calc(4 * var(--u))}.native-stepper span{font-size:calc(8 * var(--u));font-weight:500}.native-stepper button{font-size:calc(10 * var(--u));color:var(--phase-accent)}
+.activity #timer-toggle{width:calc(28 * var(--u));height:calc(28 * var(--u));border-radius:50%;background:var(--phase-accent);color:#293d2e;font-size:calc(11 * var(--u));font-weight:600}
+.activity #timer-reset{width:calc(28 * var(--u));height:calc(28 * var(--u));border-radius:50%;background:#ffffff0d;color:var(--phase-accent);font-size:calc(12 * var(--u))}
+.pomodoro-session-dots{height:calc(5 * var(--u));display:flex;align-items:center;gap:calc(5 * var(--u))}.pomodoro-session-dots i{width:calc(4 * var(--u));height:calc(4 * var(--u));background:#ffffff29;border-radius:50%}
+.native-running{display:none!important}.activity #timer-skip{position:absolute;top:0;right:calc(24 * var(--u));font-size:calc(8 * var(--u));color:var(--phase-accent)}

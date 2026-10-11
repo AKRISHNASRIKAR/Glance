@@ -42,13 +42,15 @@ struct NotchRootView: View {
     @ViewBuilder
     private var fullBleedArtwork: some View {
         if viewModel.visualState == .expanded, viewModel.currentInterruption == nil {
-            if settings.settings.nowPlaying.appearance == .artwork,
+            if screens.selectedPageContains(.claudeCode) {
+                ClaudeBackgroundView()
+                    .transition(.opacity)
+            } else if settings.settings.nowPlaying.appearance == .artwork,
                screens.selectedPageContains(.nowPlaying),
                nowPlaying.artwork != nil {
                 ArtworkBackgroundView(config: settings.settings.nowPlaying)
                     .transition(.opacity)
-            } else if settings.settings.pomodoro.appearance == .artwork,
-                      screens.selectedPageContains(.pomodoro) {
+            } else if screens.selectedPageContains(.pomodoro) {
                 PomodoroArtworkBackgroundView(
                     tint: PomodoroDisplayState.artworkTint(for: pomodoro.phase),
                     reduceMotion: viewModel.reduceMotion
@@ -152,9 +154,8 @@ private struct LiveIndicatorLeading: View {
     var body: some View {
         switch viewModel.liveActivity {
         case .pomodoro:
-            Image(systemName: engine.phase == .focus ? "timer" : "cup.and.saucer.fill")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.orange)
+            PomodoroRingView(progress: engine.progress, color: Color(red: 0.66, green: 0.79, blue: 0.65), lineWidth: 2, glow: engine.runState == .running, reduceMotion: viewModel.reduceMotion)
+                .frame(width: 16, height: 16)
         case .claudeWorking:
             Image(systemName: "asterisk")
                 .font(.system(size: 12, weight: .bold))
@@ -180,7 +181,7 @@ private struct LiveIndicatorTrailing: View {
         case .pomodoro:
             PomodoroRemainingLabel()
                 .font(.system(size: 12, weight: .semibold, design: .rounded).monospacedDigit())
-                .foregroundStyle(.orange)
+                .foregroundStyle(Color(red: 0.66, green: 0.79, blue: 0.65))
         case .claudeWorking:
             ClaudeThinkingView(isAnimating: !viewModel.reduceMotion)
         case .media:

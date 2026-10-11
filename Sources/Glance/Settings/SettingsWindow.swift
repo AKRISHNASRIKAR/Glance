@@ -356,7 +356,7 @@ struct PomodoroPane: View {
                 }
                 Section("Quick Durations") {
                     DurationPresetsEditor()
-                    Text("Minute presets the duration stepper (Classic and Artwork appearances) steps through, for Focus and Break.")
+                    Text("Minute presets for Classic and Artwork. Minimal uses fixed 5, 15, 25, and 50 minute steps.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

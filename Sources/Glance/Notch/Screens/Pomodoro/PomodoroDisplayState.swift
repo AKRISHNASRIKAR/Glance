@@ -17,7 +17,9 @@ struct PomodoroDisplayState: Equatable {
 
     /// The ring/accent color every appearance but Artwork uses.
     var phaseColor: Color {
-        phase == .focus ? .orange : .mint
+        phase == .focus
+            ? Color(red: 1, green: 0.65, blue: 0.39)
+            : Color(red: 0.43, green: 0.85, blue: 0.72)
     }
 
     /// Artwork's background wash is the one place break phases need to read
@@ -29,9 +31,9 @@ struct PomodoroDisplayState: Equatable {
     /// background — don't have to build one just to read it.
     static func artworkTint(for phase: PomodoroPhase) -> Color {
         switch phase {
-        case .focus: return Color(red: 0.36, green: 0.56, blue: 0.95)
-        case .shortBreak: return Color(red: 0.40, green: 0.78, blue: 0.56)
-        case .longBreak: return Color(red: 0.62, green: 0.48, blue: 0.90)
+        case .focus: return Color(red: 0.42, green: 0.66, blue: 0.52)
+        case .shortBreak: return Color(red: 0.42, green: 0.64, blue: 0.78)
+        case .longBreak: return Color(red: 0.65, green: 0.52, blue: 0.78)
         }
     }
 
@@ -76,6 +78,7 @@ struct PomodoroActions {
     var selectPhase: @MainActor @Sendable (PomodoroPhase) -> Void
     /// +1 / -1 through `PomodoroSettings.durationPresetsMinutes`.
     var adjustDuration: @MainActor @Sendable (Int) -> Void
+    var adjustMinimalDuration: @MainActor @Sendable (Int) -> Void
 
     @MainActor
     init(engine: PomodoroEngine, settings: SettingsStore) {
@@ -88,12 +91,15 @@ struct PomodoroActions {
         adjustDuration = { direction in
             Self.adjustDuration(by: direction, engine: engine, settings: settings)
         }
+        adjustMinimalDuration = { direction in
+            Self.adjustDuration(by: direction, engine: engine, settings: settings, fixedPresets: [300, 900, 1500, 3000])
+        }
     }
 
     @MainActor
     private static func presetsSeconds(_ settings: SettingsStore) -> [TimeInterval] {
         let minutes = Set(settings.settings.pomodoro.durationPresetsMinutes.filter { $0 > 0 })
-        guard !minutes.isEmpty else { return [300, 900, 1500, 1800, 3000] }
+        guard !minutes.isEmpty else { return [300, 900, 1500, 3000] }
         return minutes.sorted().map { TimeInterval($0 * 60) }
     }
 
@@ -112,8 +118,8 @@ struct PomodoroActions {
     /// exactly one of the presets (e.g. set via the Settings slider), the
     /// first step snaps to the nearest preset in that direction.
     @MainActor
-    private static func adjustDuration(by direction: Int, engine: PomodoroEngine, settings: SettingsStore) {
-        let pool = presetsSeconds(settings)
+    private static func adjustDuration(by direction: Int, engine: PomodoroEngine, settings: SettingsStore, fixedPresets: [TimeInterval]? = nil) {
+        let pool = fixedPresets ?? presetsSeconds(settings)
         let current = engine.phaseDuration
         if let exactIndex = pool.firstIndex(of: current) {
             let target = min(max(exactIndex + direction, 0), pool.count - 1)

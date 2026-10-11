@@ -1,76 +1,58 @@
 import GlanceKit
 import SwiftUI
 
-/// Minimal — almost entirely typography. No ring, no stepper, no session
-/// track: just the mode, a large timer, a hairline progress rule, and one
-/// primary action. Flow's defining trick is restraint; this is Glance's
-/// version of that same idea.
+/// The time stays on the screen's true center; transport lives independently
+/// at the right edge so Start/Pause/Resume never shifts the countdown.
 struct MinimalPomodoroRenderer: View {
     let state: PomodoroDisplayState
     let actions: PomodoroActions
     var reduceMotion: Bool = false
 
     var body: some View {
-        VStack(spacing: 10) {
-            Text(state.phase.displayName.uppercased())
-                .font(.system(size: 10, weight: .semibold))
-                .tracking(2.4)
-                .foregroundStyle(.white.opacity(0.45))
-
-            Text(state.timeText)
-                .font(.system(size: 34, weight: .medium, design: .rounded).monospacedDigit())
-                .foregroundStyle(.white)
-
-            progressRule
-
-            actionRow
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .padding(.vertical, 8)
-        .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: state.phase)
-    }
-
-    private var progressRule: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Color.white.opacity(0.12))
-                Capsule()
-                    .fill(state.phaseColor.opacity(0.85))
-                    .frame(width: proxy.size.width * max(state.progress, 0.015))
-                    .animation(reduceMotion ? nil : .easeInOut(duration: 0.3), value: state.progress)
+        ZStack {
+            HStack(spacing: 5) {
+                arrow("chevron.left", direction: -1)
+                Text(state.timeText)
+                    .font(.system(size: 30, weight: .light, design: .rounded).monospacedDigit())
+                    .tracking(-1)
+                    .foregroundStyle(.white)
+                    .contentTransition(.numericText(countsDown: true))
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: state.timeText)
+                    .lineLimit(1).minimumScaleFactor(0.65)
+                    .frame(width: 102)
+                    .accessibilityLabel("\(state.phase.displayName), \(state.timeText) remaining")
+                arrow("chevron.right", direction: 1)
+            }
+            .frame(maxWidth: .infinity, alignment: .center)
+            HStack {
+                Spacer()
+                let primary = PomodoroPrimaryActionSpec(runState: state.runState, actions: actions)
+                NotchIconButton(systemName: primary.systemImage, size: 13, action: primary.handler)
+                    .accessibilityLabel(primary.title)
             }
         }
-        .frame(width: 120, height: 2)
-    }
-
-    @ViewBuilder
-    private var actionRow: some View {
-        let primary = PomodoroPrimaryActionSpec(runState: state.runState, actions: actions)
-        HStack(spacing: 12) {
-            plainTextButton(primary.title, action: primary.handler, emphasized: true)
-            switch state.runState {
-            case .idle:
-                if state.canSkipBreak {
-                    dot
-                    plainTextButton("Skip", action: actions.skipBreak)
-                }
-            case .running, .paused:
-                dot
-                plainTextButton("Reset", action: actions.reset)
+        .padding(.horizontal, 10)
+        .padding(.bottom, 20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contextMenu {
+            if state.runState == .idle {
+                Button("Focus") { actions.selectPhase(.focus) }
+                Button("Rest") { actions.selectPhase(.shortBreak) }
+            } else {
+                Button("Reset timer", action: actions.reset)
             }
+            if state.canSkipBreak { Button("Skip rest", action: actions.skipBreak) }
         }
     }
 
-    private var dot: some View {
-        Circle().fill(Color.white.opacity(0.25)).frame(width: 2.5, height: 2.5)
-    }
-
-    private func plainTextButton(_ title: String, action: @escaping () -> Void, emphasized: Bool = false) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(.system(size: 11.5, weight: emphasized ? .semibold : .medium))
-                .foregroundStyle(.white.opacity(emphasized ? 0.92 : 0.5))
+    private func arrow(_ symbol: String, direction: Int) -> some View {
+        Button { actions.adjustMinimalDuration(direction) } label: {
+            Image(systemName: symbol).font(.system(size: 9, weight: .semibold))
+                .frame(width: 16, height: 28)
         }
         .buttonStyle(.plain)
+        .foregroundStyle(.white.opacity(state.runState == .idle ? 0.55 : 0.15))
+        .disabled(state.runState != .idle)
+        .accessibilityLabel(direction > 0 ? "Increase duration" : "Decrease duration")
     }
 }
