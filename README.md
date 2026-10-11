@@ -25,31 +25,26 @@ It is not a Dynamic Island clone, not a notification replacement, and not a dash
 
 ## Product Preview
 
-Try the [interactive preview](https://glance-notch.vercel.app/) for music, focus, and Claude activity. The close-ups below are browser demos of the interface, not live Mac activity.
+Screenshots from the running macOS app, saved as PNGs at their original resolution. Try the separate [interactive website demo](https://glance-notch.vercel.app/) to explore the controls.
 
 <p align="center">
-  <img src="assets/screenshots/landing-music.png" alt="Glance music demo with artwork gradient and centered notch" width="552" />
-  <br /><sub>Music — artwork gradient, playback controls, and progress</sub>
+  <img src="assets/screenshots/now-playing-artwork.png" alt="Native Glance playing Season 2 Weight Loss by Harry Styles in Apple Music, with artwork background and playback controls" width="960" />
+  <br /><sub>Now Playing — Artwork appearance, captured from the native app</sub>
 </p>
 
 <p align="center">
-  <img src="assets/screenshots/landing-pomodoro.png" alt="Classic Pomodoro browser demo with centered circular timer and sage gradient" width="552" />
-  <br /><sub>Pomodoro — centered timer, soft gradients, and quick duration controls</sub>
+  <img src="assets/screenshots/pomodoro.png" alt="Native Classic Pomodoro with a centered 5-minute timer, duration controls, and sage-to-plum gradient" width="960" />
+  <br /><sub>Pomodoro — Classic appearance, ready for a five-minute focus session</sub>
 </p>
 
 <p align="center">
-  <img src="assets/screenshots/landing-claude.png" alt="Claude activity browser demo with a warm gradient" width="552" />
-  <br /><sub>Claude — session activity with a warm background</sub>
+  <img src="assets/screenshots/claude-native.png" alt="Native Claude activity screen with warm gradient and no active session" width="960" />
+  <br /><sub>Claude — the actual idle state, with no active session</sub>
 </p>
-
-<details>
-<summary>Native Now Playing screenshot</summary>
-<p align="center"><img src="assets/screenshots/now-playing-artwork.png" alt="Native Glance Now Playing screen" width="640" /></p>
-</details>
 
 <p align="center">
   <img src="assets/screenshots/menu-bar-icon.png" alt="Glance menu bar glyph: a display outline with a centered top notch" width="54" />
-  <br /><sub>New menu bar mark — a display with a centered notch, adapting to light and dark mode</sub>
+  <br /><sub>Menu bar mark — a display with a centered notch, adapting to light and dark mode</sub>
 </p>
 
 ## Available Now
