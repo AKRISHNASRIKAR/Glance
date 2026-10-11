@@ -1,0 +1,9 @@
+/* Apple Support's actual 2025 M4 Air front view, clipped in CSS from its color lineup. */
+.macbook{aspect-ratio:1090/660;background:url('assets/macbook-air-m4-2025.png') no-repeat left top;background-size:178.3486% auto;filter:drop-shadow(0 14px 20px #0002)}
+.macbook .desktop{position:absolute;top:3.18%;left:10.09%;width:79.82%;height:85.76%;aspect-ratio:auto;border:0;border-radius:0;margin:0;box-shadow:none;background:transparent}
+.desktop:after,.desktop-grain,.macbook-chin,.macbook-base,.device-shadow,.desktop>.notch{display:none}
+.desktop-caption,.desktop-dock{display:none}
+.desktop-menu{background:#050b1640;color:#fff;height:2.5cqw}
+.activity{margin:calc(-32 * var(--u)) auto 0}
+@media(max-width:760px){.macbook .desktop{border:0;border-radius:0}.desktop-caption{display:none}}
+.macbook{clip-path:polygon(8.1% 0,91.7% 0,91.7% 95%,100% 95%,100% 100%,0 100%,0 95%,8.1% 95%)}
