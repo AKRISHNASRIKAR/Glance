@@ -248,7 +248,11 @@ func drawMenuGlyph(_ context: CGContext, size: CGFloat) {
     context.fillPath()
 }
 drawMenuGlyph(pdfContext, size: menuBarSize)
-let menuPreview = renderPNG(size: 216) { context, size in drawMenuGlyph(context, size: size) }
+let menuPreview = renderPNG(size: 216) { context, size in
+    context.setFillColor(CGColor(gray: 0.96, alpha: 1))
+    context.fill(CGRect(x: 0, y: 0, width: size, height: size))
+    drawMenuGlyph(context, size: size)
+}
 try menuPreview.write(to: repoRoot.appendingPathComponent("assets/screenshots/menu-bar-icon.png"))
 
 pdfContext.endPage()
