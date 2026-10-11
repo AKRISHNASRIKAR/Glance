@@ -26,15 +26,19 @@ public final class ClaudeCodeProvider: ActivityProvider, ObservableObject {
     private var directoryDescriptor: CInt = -1
     private let settings: SettingsStore
     private let timeSource: TimeSource
+    private let scheduler: GlanceScheduler
+    private var stalenessHandle: GlanceCancellable?
 
     public init(
         settings: SettingsStore,
         installer: ClaudeCodeHookInstaller = ClaudeCodeHookInstaller(),
-        timeSource: TimeSource = SystemTimeSource()
+        timeSource: TimeSource = SystemTimeSource(),
+        scheduler: GlanceScheduler = TimerScheduler()
     ) {
         self.settings = settings
         self.installer = installer
         self.timeSource = timeSource
+        self.scheduler = scheduler
     }
 
     public func start() {
@@ -57,6 +61,8 @@ public final class ClaudeCodeProvider: ActivityProvider, ObservableObject {
         directorySource?.cancel()
         directorySource = nil
         machine = ClaudeCodeStateMachine()
+        stalenessHandle?.cancel()
+        stalenessHandle = nil
         status = .disabled
     }
 
@@ -129,6 +135,11 @@ public final class ClaudeCodeProvider: ActivityProvider, ObservableObject {
         let previous = machine.state
         machine.apply(event)
         let current = machine.state
+        // Runs on every event, not just ones that change state: any hook
+        // activity at all — even a repeated Notification — is fresh proof
+        // the session is still alive, and should push the staleness
+        // fallback back out.
+        scheduleStalenessFallback()
         guard current != previous else { return }
 
         let config = settings.settings.claudeCode
@@ -143,21 +154,30 @@ public final class ClaudeCodeProvider: ActivityProvider, ObservableObject {
             emitInterruption?(NotchInterruption(
                 provider: id, kind: "needs-input",
                 title: "Claude · Needs input",
-                subtitle: "Claude is waiting for you",
+                subtitle: machine.attentionAgentType.map { "\($0) is waiting for you" } ?? "Claude is waiting for you",
                 symbolName: "bubble.left.and.exclamationmark.bubble.right",
                 priority: .important,
-                isPersistent: true,
+                // Bounded, not persistent: if Claude resumes first, the
+                // transition away from .needsInput resolves this immediately
+                // (see above). If nobody responds, it should still recede on
+                // its own after a while rather than holding the notch open
+                // indefinitely — the Claude Screen still shows "Needs input"
+                // for as long as it's actually true; only this attention-
+                // grabbing surface times out.
+                displayDuration: Self.attentionDisplayDuration,
                 actions: [openTerminalAction()]
             ))
         case .permissionRequired:
             guard config.interruptOnPermissionRequired else { return }
+            let subtitle = event.message ?? machine.attentionAgentType.map { "\($0) needs your permission" }
+                ?? "Claude needs your permission"
             emitInterruption?(NotchInterruption(
                 provider: id, kind: "permission-required",
                 title: "Claude · Permission",
-                subtitle: event.message ?? "Claude needs your permission",
+                subtitle: subtitle,
                 symbolName: "lock.shield",
                 priority: .important,
-                isPersistent: true,
+                displayDuration: Self.attentionDisplayDuration,
                 actions: [openTerminalAction()],
                 privacy: .sensitive
             ))
@@ -185,6 +205,39 @@ public final class ClaudeCodeProvider: ActivityProvider, ObservableObject {
                 displayDuration: 6
             ))
         case .idle, .working:
+            break
+        }
+    }
+
+    /// How long "needs input" / "permission required" hold the notch's
+    /// attention-grabbing surface before receding on their own.
+    static let attentionDisplayDuration: TimeInterval = 60
+
+    /// If Claude Code goes completely silent — no further hook events of
+    /// any kind — while sitting in one of these states, the most likely
+    /// explanation is that the session ended without ever firing
+    /// SessionEnd (the terminal was force-closed, the process crashed, or
+    /// the machine slept through it) rather than that Claude has genuinely
+    /// been waiting on the user, done, or idle for this long. Hooks are the
+    /// only signal Glance has — there's no process to check — so after this
+    /// long with nothing at all, treat the session as gone and fall back to
+    /// idle instead of showing a stale "needs your input"/"permission
+    /// required"/"completed" forever. `.working` is deliberately excluded:
+    /// a single long-running tool call can legitimately produce no hook
+    /// activity for a while, and that's not a sign the session is gone.
+    static let stalenessTimeout: TimeInterval = 20 * 60
+
+    private func scheduleStalenessFallback() {
+        stalenessHandle?.cancel()
+        stalenessHandle = nil
+        switch machine.state {
+        case .needsInput, .permissionRequired, .completed:
+            let trackedSessionID = machine.sessionID
+            stalenessHandle = scheduler.schedule(after: Self.stalenessTimeout) { [weak self] in
+                guard let self, self.machine.sessionID == trackedSessionID else { return }
+                self.apply(ClaudeCodeEvent(kind: .sessionEnd, sessionID: trackedSessionID, receivedAt: self.timeSource.now))
+            }
+        case .idle, .working, .failed:
             break
         }
     }

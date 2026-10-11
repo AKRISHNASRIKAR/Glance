@@ -95,6 +95,14 @@ entries) — track changes cost one tiny decode, never per-frame work.
 Track changes crossfade the background and the square artwork independently
 (~450–500 ms ease); Reduce Motion replaces animation with a direct swap.
 
+**Artwork retry:** right after a track change — starting playback from the
+library, or stepping to the previous/next track — the player often hasn't
+decoded/exposed artwork bytes yet, so the first fetch can come back empty.
+`NowPlayingProvider` retries at 0.3 s/0.7 s/1.4 s (only while the same
+artworkID is still current) before accepting "no artwork" — otherwise that
+transient miss was permanent, since nothing re-triggers a fetch until the
+next track change.
+
 ## Settings
 
 Player appearance (Minimal / Artwork), artwork blur, background intensity,

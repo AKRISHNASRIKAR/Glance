@@ -9,6 +9,7 @@ struct NotchRootView: View {
     @EnvironmentObject var screens: ScreenStore
     @EnvironmentObject var settings: SettingsStore
     @EnvironmentObject var nowPlaying: NowPlayingProvider
+    @EnvironmentObject var pomodoro: PomodoroEngine
 
     var body: some View {
         GeometryReader { proxy in
@@ -34,17 +35,26 @@ struct NotchRootView: View {
     }
 
     /// Artwork appearance covers the entire expanded shape — including the
-    /// notch row — but only while the Now Playing page is the one on screen,
-    /// so it never bleeds into other pages.
+    /// notch row — but only while the matching page is the one on screen,
+    /// so it never bleeds into other pages. Now Playing and Pomodoro's
+    /// Artwork appearance are mutually exclusive by construction (they're
+    /// different Screens), so only one of these ever applies at a time.
     @ViewBuilder
     private var fullBleedArtwork: some View {
-        if viewModel.visualState == .expanded,
-           viewModel.currentInterruption == nil,
-           settings.settings.nowPlaying.appearance == .artwork,
-           screens.selectedPageContains(.nowPlaying),
-           nowPlaying.artwork != nil {
-            ArtworkBackgroundView(config: settings.settings.nowPlaying)
+        if viewModel.visualState == .expanded, viewModel.currentInterruption == nil {
+            if settings.settings.nowPlaying.appearance == .artwork,
+               screens.selectedPageContains(.nowPlaying),
+               nowPlaying.artwork != nil {
+                ArtworkBackgroundView(config: settings.settings.nowPlaying)
+                    .transition(.opacity)
+            } else if settings.settings.pomodoro.appearance == .artwork,
+                      screens.selectedPageContains(.pomodoro) {
+                PomodoroArtworkBackgroundView(
+                    tint: PomodoroDisplayState.artworkTint(for: pomodoro.phase),
+                    reduceMotion: viewModel.reduceMotion
+                )
                 .transition(.opacity)
+            }
         }
     }
 
@@ -172,7 +182,7 @@ private struct LiveIndicatorTrailing: View {
                 .font(.system(size: 12, weight: .semibold, design: .rounded).monospacedDigit())
                 .foregroundStyle(.orange)
         case .claudeWorking:
-            AudioBarsView(color: .claudeAccent, isAnimating: !viewModel.reduceMotion)
+            ClaudeThinkingView(isAnimating: !viewModel.reduceMotion)
         case .media:
             AudioBarsView(color: .white.opacity(0.9), isAnimating: !viewModel.reduceMotion)
         case .network:
@@ -264,6 +274,38 @@ struct AudioBarsView: View {
     }
 
     private let heights: [(CGFloat, CGFloat)] = [(6, 12), (13, 5), (8, 11)]
+}
+
+/// Claude's "working" glyph: three dots bouncing in a staggered wave (a
+/// typing/thinking indicator), deliberately distinct from `AudioBarsView`'s
+/// equalizer bars — Claude generating a response isn't the same thing as
+/// music playing, and using the same glyph (just recolored) read as "music
+/// is somehow playing in Claude's color".
+struct ClaudeThinkingView: View {
+    var dotSize: CGFloat = 4.5
+    var spacing: CGFloat = 3
+    var isAnimating: Bool = true
+    @State private var phase = false
+
+    var body: some View {
+        HStack(spacing: spacing) {
+            ForEach(0..<3, id: \.self) { index in
+                Circle()
+                    .fill(Color.claudeAccent)
+                    .frame(width: dotSize, height: dotSize)
+                    .offset(y: phase ? -dotSize * 0.6 : dotSize * 0.6)
+                    .animation(
+                        isAnimating
+                            ? .easeInOut(duration: 0.5).repeatForever(autoreverses: true).delay(Double(index) * 0.15)
+                            : nil,
+                        value: phase
+                    )
+            }
+        }
+        .frame(height: dotSize * 3, alignment: .center)
+        .onAppear { if isAnimating { phase = true } }
+        .accessibilityLabel("Claude is working")
+    }
 }
 
 struct MiniArtworkView: View {

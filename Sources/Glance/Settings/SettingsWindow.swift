@@ -332,6 +332,18 @@ struct PomodoroPane: View {
         VStack(alignment: .leading, spacing: 18) {
             SettingsHeader(title: "Pomodoro")
             Form {
+                Section("Appearance") {
+                    Picker("Appearance", selection: settingsBinding(settings, \.pomodoro.appearance)) {
+                        ForEach(PomodoroAppearance.allCases, id: \.self) { appearance in
+                            Text(appearance.displayName).tag(appearance)
+                        }
+                    }
+                    .pickerStyle(.radioGroup)
+                    .labelsHidden()
+                    Text(settings.settings.pomodoro.appearance.summary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 Section("Durations") {
                     durationStepper("Focus", \.pomodoro.focusDuration, range: 5...120)
                     durationStepper("Short break", \.pomodoro.shortBreakDuration, range: 1...45)
@@ -344,7 +356,7 @@ struct PomodoroPane: View {
                 }
                 Section("Quick Durations") {
                     DurationPresetsEditor()
-                    Text("Minute presets the +/- arrows beside the Pomodoro ring step through, for Focus and Break.")
+                    Text("Minute presets the duration stepper (Classic and Artwork appearances) steps through, for Focus and Break.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

@@ -126,6 +126,37 @@ public struct NowPlayingSettings: Codable, Equatable, Sendable {
 
 // MARK: - Pomodoro
 
+/// Which renderer draws the Pomodoro Screen. Purely presentational — every
+/// case renders the exact same `PomodoroEngine` state; see
+/// `Sources/Glance/Notch/Screens/Pomodoro/` and `docs/POMODORO.md`.
+public enum PomodoroAppearance: String, Codable, CaseIterable, Sendable {
+    case classic
+    case minimal
+    case compact
+    case ambient
+    case artwork
+
+    public var displayName: String {
+        switch self {
+        case .classic: return "Classic"
+        case .minimal: return "Minimal"
+        case .compact: return "Compact"
+        case .ambient: return "Ambient"
+        case .artwork: return "Artwork"
+        }
+    }
+
+    public var summary: String {
+        switch self {
+        case .classic: return "The balanced default — ring, phase, and controls."
+        case .minimal: return "Almost entirely typography. Nothing extra."
+        case .compact: return "Smaller footprint for a tighter notch."
+        case .ambient: return "Nearly invisible. Just the time."
+        case .artwork: return "A soft, translucent color wash behind the timer."
+        }
+    }
+}
+
 public struct PomodoroSettings: Codable, Equatable, Sendable {
     public var focusDuration: TimeInterval = 25 * 60
     public var shortBreakDuration: TimeInterval = 5 * 60
@@ -140,6 +171,9 @@ public struct PomodoroSettings: Codable, Equatable, Sendable {
     /// and Break each snap to the nearest preset, then move up/down the
     /// list). Editable in Settings.
     public var durationPresetsMinutes: [Int] = [5, 15, 25, 30, 50]
+    /// Which renderer draws the Pomodoro Screen. Presentational only —
+    /// switching this never touches the timer engine's state.
+    public var appearance: PomodoroAppearance = .classic
 
     public init() {}
 
@@ -158,6 +192,7 @@ public struct PomodoroSettings: Codable, Equatable, Sendable {
         soundEnabled = try c.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? d.soundEnabled
         interruptionOnCompletion = try c.decodeIfPresent(Bool.self, forKey: .interruptionOnCompletion) ?? d.interruptionOnCompletion
         durationPresetsMinutes = try c.decodeIfPresent([Int].self, forKey: .durationPresetsMinutes) ?? d.durationPresetsMinutes
+        appearance = try c.decodeIfPresent(PomodoroAppearance.self, forKey: .appearance) ?? d.appearance
     }
 }
 

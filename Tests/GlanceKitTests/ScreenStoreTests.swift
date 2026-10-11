@@ -254,4 +254,24 @@ struct SettingsStoreTests {
         #expect(settings.settings.nowPlaying.artworkBlur == 0.9)
         #expect(settings.settings.nowPlaying.enableSystemMediaRemote == false)
     }
+
+    /// Same tolerance guarantee for `PomodoroSettings.appearance`: a
+    /// settings file written before it existed must still decode, defaulting
+    /// to `.classic`, and an explicit non-default value must round-trip.
+    @Test func pomodoroAppearanceDecodeToleratesMissingAndRoundTripsWhenPresent() throws {
+        let legacyURL = makeTempDirectory().appendingPathComponent("settings.json")
+        let legacy = #"""
+        {"schemaVersion":1,"pomodoro":{"focusDuration":1500,"shortBreakDuration":300,"longBreakDuration":900,"sessionsBeforeLongBreak":2,"autoStartBreak":false,"autoStartFocus":false,"soundEnabled":true,"interruptionOnCompletion":true}}
+        """#
+        try Data(legacy.utf8).write(to: legacyURL)
+        let legacySettings = SettingsStore(fileURL: legacyURL, scheduler: TestClock())
+        #expect(legacySettings.settings.pomodoro.appearance == .classic)
+
+        let url = makeTempDirectory().appendingPathComponent("settings.json")
+        let store = SettingsStore(fileURL: url, scheduler: TestClock())
+        store.update { $0.pomodoro.appearance = .ambient }
+        store.saveNow()
+        let reloaded = SettingsStore(fileURL: url, scheduler: TestClock())
+        #expect(reloaded.settings.pomodoro.appearance == .ambient)
+    }
 }

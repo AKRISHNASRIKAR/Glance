@@ -59,28 +59,170 @@ struct ClaudeCodeStateMachineTests {
         #expect(machine.state == .idle)
         #expect(machine.sessionID == nil)
     }
+
+    /// A SessionEnd from an unrelated, concurrent Claude Code session (a
+    /// different terminal/project — the documented "multiple sessions" v0
+    /// limitation) must never reset the session Glance is actually
+    /// following, or silently drop its still-pending persistent alert.
+    @Test func sessionEndFromADifferentSessionIsIgnored() {
+        var machine = ClaudeCodeStateMachine()
+        machine.apply(ClaudeCodeEvent(kind: .sessionStart, sessionID: "session-A"))
+        machine.apply(ClaudeCodeEvent(kind: .notification, sessionID: "session-A", message: "Claude needs your permission to use Bash"))
+        #expect(machine.state == .permissionRequired)
+
+        machine.apply(ClaudeCodeEvent(kind: .sessionEnd, sessionID: "session-B"))
+        #expect(machine.state == .permissionRequired, "an unrelated session's end must not clear this one's pending alert")
+        #expect(machine.sessionID == "session-A")
+
+        machine.apply(ClaudeCodeEvent(kind: .sessionEnd, sessionID: "session-A"))
+        #expect(machine.state == .idle)
+        #expect(machine.sessionID == nil)
+    }
+
+    /// The cross-session guard isn't SessionEnd-specific: any event kind
+    /// from an unrelated concurrent session must be a complete no-op,
+    /// otherwise a stray Notification/Stop/marker from session B could
+    /// still silently reassign which session Glance is tracking (and, by
+    /// extension, misdirect the staleness fallback at the wrong session).
+    @Test func eventsFromADifferentSessionAreCompletelyIgnored() {
+        var machine = ClaudeCodeStateMachine()
+        machine.apply(ClaudeCodeEvent(kind: .sessionStart, sessionID: "session-A"))
+        machine.apply(ClaudeCodeEvent(kind: .notification, sessionID: "session-A", message: "waiting for your input"))
+        #expect(machine.state == .needsInput)
+
+        machine.apply(ClaudeCodeEvent(kind: .promptSubmitted, sessionID: "session-B"))
+        #expect(machine.state == .needsInput, "session B's activity must not touch session A's tracked state")
+        #expect(machine.sessionID == "session-A")
+
+        machine.apply(ClaudeCodeEvent(kind: .notification, sessionID: "session-B", message: "needs your permission"))
+        #expect(machine.state == .needsInput, "session B's notification must not override session A's pending state")
+        #expect(machine.sessionID == "session-A")
+
+        // Session A resuming normally still works.
+        machine.apply(ClaudeCodeEvent(kind: .promptSubmitted, sessionID: "session-A"))
+        #expect(machine.state == .working)
+    }
+
+    /// A Notification originating inside a subagent (agent_id present)
+    /// should be labeled as such, not surfaced as an ambiguous "Claude needs
+    /// you" — the user needs to know it's a spawned subagent waiting, not
+    /// the main conversation.
+    @Test func notificationFromSubagentIsLabeled() {
+        var machine = ClaudeCodeStateMachine()
+        machine.apply(ClaudeCodeEvent(kind: .notification, agentID: "sub-1", agentType: "Explore", message: "needs your permission"))
+        #expect(machine.state == .permissionRequired)
+        #expect(machine.attentionAgentType == "Explore")
+
+        machine.apply(ClaudeCodeEvent(kind: .notification, message: "waiting for your input"))
+        #expect(machine.attentionAgentType == nil, "main-session notifications carry no agent_id")
+    }
 }
 
 @MainActor
 struct ClaudeCodeProviderTests {
-    @Test func needsInputEmitsPersistentImportantInterruption() {
+    /// "Needs input" grabs attention (important priority, a generous 60 s
+    /// window) but is deliberately bounded rather than persistent forever —
+    /// see `ClaudeCodeProvider.attentionDisplayDuration`: a user who's
+    /// stepped away for good shouldn't have the notch stuck wide open
+    /// indefinitely. The Claude Screen still reflects the real state for as
+    /// long as it's true; only this attention-grabbing notch surface times out.
+    @Test func needsInputEmitsBoundedImportantInterruption() {
         let clock = TestClock()
         let (settings, _) = makeTestSettingsStore(clock: clock)
-        let provider = ClaudeCodeProvider(settings: settings, timeSource: clock)
+        let provider = ClaudeCodeProvider(settings: settings, timeSource: clock, scheduler: clock)
         var emitted: [NotchInterruption] = []
         provider.emitInterruption = { emitted.append($0) }
         provider.apply(ClaudeCodeEvent(kind: .notification, message: "Claude is waiting for your input"))
         #expect(emitted.count == 1)
         #expect(emitted.first?.kind == "needs-input")
         #expect(emitted.first?.priority == .important)
-        #expect(emitted.first?.isPersistent == true)
+        #expect(emitted.first?.isPersistent == false)
+        #expect(emitted.first?.displayDuration == ClaudeCodeProvider.attentionDisplayDuration)
         #expect(emitted.first?.actions.first?.title == "Open Claude")
+    }
+
+    /// The notch's peek surface must actually recede after the bounded
+    /// window — not just carry the right flag — even if nobody ever
+    /// resolves the underlying condition.
+    @Test func needsInputRecedesFromTheNotchAfterItsWindow() {
+        let clock = TestClock()
+        let (settings, _) = makeTestSettingsStore(clock: clock)
+        let provider = ClaudeCodeProvider(settings: settings, timeSource: clock, scheduler: clock)
+        let interruptions = InterruptionEngine(scheduler: clock, timeSource: clock)
+        provider.emitInterruption = { interruptions.present($0) }
+        provider.apply(ClaudeCodeEvent(kind: .notification, message: "Claude is waiting for your input"))
+        #expect(interruptions.current?.kind == "needs-input")
+        clock.advance(by: ClaudeCodeProvider.attentionDisplayDuration + 1)
+        #expect(interruptions.current == nil)
+    }
+
+    @Test func needsInputFromSubagentNamesItInTheSubtitle() {
+        let clock = TestClock()
+        let (settings, _) = makeTestSettingsStore(clock: clock)
+        let provider = ClaudeCodeProvider(settings: settings, timeSource: clock, scheduler: clock)
+        var emitted: [NotchInterruption] = []
+        provider.emitInterruption = { emitted.append($0) }
+        provider.apply(ClaudeCodeEvent(kind: .notification, agentID: "sub-1", agentType: "Explore", message: "waiting for your input"))
+        #expect(emitted.first?.subtitle == "Explore is waiting for you")
+    }
+
+    /// The real bug this guards against: the terminal gets force-closed (or
+    /// the machine sleeps through it) instead of Claude Code exiting
+    /// gracefully, so SessionEnd never fires — without a fallback,
+    /// "needs your input" would say that forever even though no session is
+    /// running any more.
+    @Test func needsInputFallsBackToIdleWhenTheSessionGoesSilent() {
+        let clock = TestClock()
+        let (settings, _) = makeTestSettingsStore(clock: clock)
+        let provider = ClaudeCodeProvider(settings: settings, timeSource: clock, scheduler: clock)
+        provider.emitInterruption = { _ in }
+        var resolved: [String?] = []
+        provider.resolveInterruption = { resolved.append($0) }
+
+        provider.apply(ClaudeCodeEvent(kind: .notification, sessionID: "abc", message: "waiting for your input"))
+        #expect(provider.machine.state == .needsInput)
+
+        clock.advance(by: ClaudeCodeProvider.stalenessTimeout - 1)
+        #expect(provider.machine.state == .needsInput, "must not fire early")
+
+        clock.advance(by: 2)
+        #expect(provider.machine.state == .idle)
+        #expect(resolved == ["needs-input"])
+    }
+
+    /// Any hook event at all — even one that doesn't change the reported
+    /// state — is fresh proof the session is still alive and must push the
+    /// staleness fallback back out, not just events that cause a transition.
+    @Test func repeatedNotificationsPostponeTheStalenessFallback() {
+        let clock = TestClock()
+        let (settings, _) = makeTestSettingsStore(clock: clock)
+        let provider = ClaudeCodeProvider(settings: settings, timeSource: clock, scheduler: clock)
+        provider.emitInterruption = { _ in }
+
+        provider.apply(ClaudeCodeEvent(kind: .notification, sessionID: "abc", message: "waiting for your input"))
+        clock.advance(by: ClaudeCodeProvider.stalenessTimeout - 1)
+        provider.apply(ClaudeCodeEvent(kind: .notification, sessionID: "abc", message: "waiting for your input"))
+        clock.advance(by: ClaudeCodeProvider.stalenessTimeout - 1)
+        #expect(provider.machine.state == .needsInput, "the second notification should have reset the clock")
+    }
+
+    /// `.working` is deliberately exempt: a single long tool call can
+    /// legitimately produce no hook activity for a long stretch, and that
+    /// alone isn't evidence the session is gone.
+    @Test func workingNeverFallsBackToIdleFromSilenceAlone() {
+        let clock = TestClock()
+        let (settings, _) = makeTestSettingsStore(clock: clock)
+        let provider = ClaudeCodeProvider(settings: settings, timeSource: clock, scheduler: clock)
+        provider.emitInterruption = { _ in }
+        provider.apply(ClaudeCodeEvent(kind: .promptSubmitted, sessionID: "abc"))
+        clock.advance(by: ClaudeCodeProvider.stalenessTimeout * 3)
+        #expect(provider.machine.state == .working)
     }
 
     @Test func resolvingHappensWhenClaudeResumesWorking() {
         let clock = TestClock()
         let (settings, _) = makeTestSettingsStore(clock: clock)
-        let provider = ClaudeCodeProvider(settings: settings, timeSource: clock)
+        let provider = ClaudeCodeProvider(settings: settings, timeSource: clock, scheduler: clock)
         var resolved: [String?] = []
         provider.emitInterruption = { _ in }
         provider.resolveInterruption = { resolved.append($0) }
@@ -92,7 +234,7 @@ struct ClaudeCodeProviderTests {
     @Test func completionInterruptionIncludesDuration() {
         let clock = TestClock()
         let (settings, _) = makeTestSettingsStore(clock: clock)
-        let provider = ClaudeCodeProvider(settings: settings, timeSource: clock)
+        let provider = ClaudeCodeProvider(settings: settings, timeSource: clock, scheduler: clock)
         var emitted: [NotchInterruption] = []
         provider.emitInterruption = { emitted.append($0) }
         let base = Date(timeIntervalSince1970: 1_700_000_000)
@@ -107,7 +249,7 @@ struct ClaudeCodeProviderTests {
         let clock = TestClock()
         let (settings, _) = makeTestSettingsStore(clock: clock)
         settings.update { $0.claudeCode.interruptOnCompleted = false }
-        let provider = ClaudeCodeProvider(settings: settings, timeSource: clock)
+        let provider = ClaudeCodeProvider(settings: settings, timeSource: clock, scheduler: clock)
         var emitted: [NotchInterruption] = []
         provider.emitInterruption = { emitted.append($0) }
         provider.apply(ClaudeCodeEvent(kind: .promptSubmitted))
@@ -123,7 +265,7 @@ struct ClaudeCodeProviderTests {
             claudeSettingsURL: makeTempDirectory().appendingPathComponent("settings.json"),
             spoolDirectoryURL: spool
         )
-        let provider = ClaudeCodeProvider(settings: settings, installer: installer, timeSource: clock)
+        let provider = ClaudeCodeProvider(settings: settings, installer: installer, timeSource: clock, scheduler: clock)
         var emitted: [NotchInterruption] = []
         provider.emitInterruption = { emitted.append($0) }
 

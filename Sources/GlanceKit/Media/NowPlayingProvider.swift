@@ -38,6 +38,7 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
     private var lastChangeAt: [MediaSourceKind: Date] = [:]
     private let analyzer = ArtworkAnalyzer()
     private var artworkTask: Task<Void, Never>?
+    private var artworkRetryHandle: GlanceCancellable?
     private var positionPollHandle: GlanceCancellable?
     private var detailVisible = false
     private let scheduler: GlanceScheduler
@@ -152,6 +153,8 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
         artwork = nil
         artworkAnalysis = nil
         artworkTask?.cancel()
+        artworkRetryHandle?.cancel()
+        artworkRetryHandle = nil
         positionPollHandle?.cancel()
         positionPollHandle = nil
         snapshotRetryHandle?.cancel()
@@ -218,8 +221,23 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
 
     // MARK: Artwork
 
-    private func loadArtwork(for state: MediaState) {
-        artworkTask?.cancel()
+    /// Retry backoff for a transient empty artwork fetch (seconds). Right
+    /// after a track change — starting playback from the library, or
+    /// stepping to the previous/next track — the player often hasn't
+    /// decoded/exposed artwork bytes yet: scripting's "data of artwork 1"
+    /// returns empty for a beat. Without retrying, that transient miss was
+    /// permanent: the artworkID never changes again for that track, so
+    /// nothing re-triggers a fetch, and the cover stays blank until the next
+    /// track change. Retrying briefly closes that race instead of accepting
+    /// the first empty answer as truth.
+    private static let artworkRetryDelays: [TimeInterval] = [0.3, 0.7, 1.4]
+
+    private func loadArtwork(for state: MediaState, attempt: Int = 0) {
+        if attempt == 0 {
+            artworkTask?.cancel()
+            artworkRetryHandle?.cancel()
+            artworkRetryHandle = nil
+        }
         let artworkID = state.artworkID
         artworkTask = Task { [weak self] in
             guard let self else { return }
@@ -227,8 +245,15 @@ public final class NowPlayingProvider: ActivityProvider, ObservableObject {
             let data = await source.fetchArtwork(for: state)
             guard !Task.isCancelled, self.state?.artworkID == artworkID else { return }
             guard let data else {
-                self.artwork = nil
-                self.artworkAnalysis = nil
+                guard attempt < Self.artworkRetryDelays.count else {
+                    self.artwork = nil
+                    self.artworkAnalysis = nil
+                    return
+                }
+                self.artworkRetryHandle = self.scheduler.schedule(after: Self.artworkRetryDelays[attempt]) { [weak self] in
+                    guard let self, self.state?.artworkID == artworkID else { return }
+                    self.loadArtwork(for: state, attempt: attempt + 1)
+                }
                 return
             }
             let analyzer = self.analyzer

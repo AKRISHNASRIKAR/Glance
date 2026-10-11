@@ -163,6 +163,16 @@ make app        # builds dist/Glance.app (ad-hoc signed)
 open dist/Glance.app
 ```
 
+## Frontend Landing Page
+
+The standalone landing page lives in [`frontend/`](frontend/README.md), alongside the native app. Preview it without installing dependencies:
+
+```bash
+python3 -m http.server 4173 --directory frontend
+```
+
+Open http://localhost:4173. Deploy the `frontend/` directory to any static web host.
+
 ## Development Setup
 
 - Full Xcode: `swift build`, `swift test` work directly.

@@ -44,7 +44,7 @@ struct ClaudeCodeScreenView: View {
             statusBlock(symbol: "moon.zzz", tint: .white.opacity(0.5), title: "No active session", detail: nil)
         case .working:
             VStack(spacing: 7) {
-                AudioBarsView(color: .claudeAccent, isAnimating: true)
+                ClaudeThinkingView(dotSize: 6, spacing: 4)
                 Text("Working")
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(.white)
@@ -57,9 +57,15 @@ struct ClaudeCodeScreenView: View {
                 }
             }
         case .needsInput:
-            actionBlock(symbol: "bubble.left.and.exclamationmark.bubble.right", tint: .orange, title: "Needs your input")
+            actionBlock(
+                symbol: "bubble.left.and.exclamationmark.bubble.right", tint: .orange,
+                title: "Needs your input", detail: machine.attentionAgentType.map { "From \($0)" }
+            )
         case .permissionRequired:
-            actionBlock(symbol: "lock.shield", tint: .orange, title: "Permission required")
+            actionBlock(
+                symbol: "lock.shield", tint: .orange,
+                title: "Permission required", detail: machine.attentionAgentType.map { "From \($0)" }
+            )
         case .completed:
             statusBlock(
                 symbol: "checkmark.circle.fill",
@@ -89,7 +95,7 @@ struct ClaudeCodeScreenView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func actionBlock(symbol: String, tint: Color, title: String) -> some View {
+    private func actionBlock(symbol: String, tint: Color, title: String, detail: String? = nil) -> some View {
         VStack(spacing: 8) {
             Image(systemName: symbol)
                 .font(.system(size: 20, weight: .medium))
@@ -97,6 +103,11 @@ struct ClaudeCodeScreenView: View {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(.white)
+            if let detail {
+                Text(detail)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.white.opacity(0.5))
+            }
             Button("Open Claude") {
                 ClaudeCodeProvider.activateTerminalApplication()
             }
