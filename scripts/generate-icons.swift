@@ -234,28 +234,22 @@ guard let pdfConsumer = CGDataConsumer(url: menuBarURL as CFURL),
 var mediaBox = menuBarRect
 pdfContext.beginPage(mediaBox: &mediaBox)
 
-// Solid capsule with a punched-out center dot — a single black shape
-// (alpha only) that NSStatusItem tints automatically as a template image.
-// Taller proportions than the app icon mark so it stays legible at 16-18pt.
-let barWidth = menuBarRect.width * 0.86
-let barHeight = menuBarRect.width * 0.46
-let barRect = CGRect(
-    x: menuBarRect.midX - barWidth / 2, y: menuBarRect.midY - barHeight / 2,
-    width: barWidth, height: barHeight
-)
-let barPath = CGPath(roundedRect: barRect, cornerWidth: barHeight / 2, cornerHeight: barHeight / 2, transform: nil)
-
-let holeRadius = menuBarRect.width * 0.10
-let holeRect = CGRect(
-    x: menuBarRect.midX - holeRadius, y: menuBarRect.midY - holeRadius,
-    width: holeRadius * 2, height: holeRadius * 2
-)
-let holePath = CGPath(ellipseIn: holeRect, transform: nil)
-
-pdfContext.setFillColor(CGColor(red: 0, green: 0, blue: 0, alpha: 1))
-pdfContext.addPath(barPath)
-pdfContext.addPath(holePath)
-pdfContext.fillPath(using: .evenOdd)
+// A miniature display outline with a top-attached camera notch.
+// One template color keeps the glyph crisp in light and dark menu bars.
+func drawMenuGlyph(_ context: CGContext, size: CGFloat) {
+    let frame = CGRect(x: size * 0.12, y: size * 0.20, width: size * 0.76, height: size * 0.60)
+    context.setStrokeColor(CGColor(gray: 0, alpha: 1))
+    context.setLineWidth(size * 0.085)
+    context.addPath(CGPath(roundedRect: frame, cornerWidth: size * 0.12, cornerHeight: size * 0.12, transform: nil))
+    context.strokePath()
+    let notch = CGRect(x: size * 0.35, y: size * 0.61, width: size * 0.30, height: size * 0.19)
+    context.setFillColor(CGColor(gray: 0, alpha: 1))
+    context.addPath(CGPath(roundedRect: notch, cornerWidth: size * 0.045, cornerHeight: size * 0.045, transform: nil))
+    context.fillPath()
+}
+drawMenuGlyph(pdfContext, size: menuBarSize)
+let menuPreview = renderPNG(size: 216) { context, size in drawMenuGlyph(context, size: size) }
+try menuPreview.write(to: repoRoot.appendingPathComponent("assets/screenshots/menu-bar-icon.png"))
 
 pdfContext.endPage()
 pdfContext.closePDF()

@@ -25,22 +25,32 @@ It is not a Dynamic Island clone, not a notification replacement, and not a dash
 
 ## Product Preview
 
+Try the [interactive preview](https://glance-notch.vercel.app/) for music, focus, and Claude activity. The close-ups below are browser demos of the interface, not live Mac activity.
+
 <p align="center">
-  <img src="assets/screenshots/now-playing-artwork.png" alt="Now Playing, Artwork appearance — blurred album art fills the expanded screen, transport controls centered on the notch" width="640" />
-  <br /><sub>Now Playing — Artwork appearance</sub>
+  <img src="assets/screenshots/landing-music.png" alt="Glance music demo with artwork gradient and centered notch" width="552" />
+  <br /><sub>Music — artwork gradient, playback controls, and progress</sub>
 </p>
 
 <p align="center">
-  <img src="assets/screenshots/pomodoro.png" alt="Pomodoro screen — ring timer, +/- duration arrows, Focus/Break selector" width="640" />
-  <br /><sub>Pomodoro — the ring, the +/- arrows for quick duration changes, Focus / Break</sub>
+  <img src="assets/screenshots/landing-pomodoro.png" alt="Classic Pomodoro browser demo with centered circular timer and sage gradient" width="552" />
+  <br /><sub>Pomodoro — centered timer, soft gradients, and quick duration controls</sub>
 </p>
 
 <p align="center">
-  <img src="assets/screenshots/menu-bar-icon.png" alt="Glance's menu bar icon — a notch-shaped pill with a live-indicator dot" height="44" />
-  <br /><sub>The menu bar icon — a notch, with the same "device active" dot real hardware shows beside it</sub>
+  <img src="assets/screenshots/landing-claude.png" alt="Claude activity browser demo with a warm gradient" width="552" />
+  <br /><sub>Claude — session activity with a warm background</sub>
 </p>
 
-More screenshots (Minimal appearance, a Claude Code interruption, the Settings window) are welcome as contributions — see [CONTRIBUTING.md](CONTRIBUTING.md).
+<details>
+<summary>Native Now Playing screenshot</summary>
+<p align="center"><img src="assets/screenshots/now-playing-artwork.png" alt="Native Glance Now Playing screen" width="640" /></p>
+</details>
+
+<p align="center">
+  <img src="assets/screenshots/menu-bar-icon.png" alt="Glance menu bar glyph: a display outline with a centered top notch" width="54" />
+  <br /><sub>New menu bar mark — a display with a centered notch, adapting to light and dark mode</sub>
+</p>
 
 ## Available Now
 
@@ -59,7 +69,7 @@ More screenshots (Minimal appearance, a Claude Code interruption, the Settings w
 - Optional **Context Awareness** foundation with local history and retention controls
 - Optional **Coding Activity** screen (time + current editor)
 - **Claude Code integration** via official hooks: needs-input / permission / completed interruptions and an optional status screen — live activity uses Claude's own accent color and mark, not a generic system glyph
-- Custom app icon and menu bar glyph — a notch-shaped mark with a centered "live" dot, generated as vector art (`scripts/generate-icons.swift`) rather than shipped as opaque binary assets
+- Midnight app icon and menu bar glyph — a display outline with a centered top notch, generated as vector art (`scripts/generate-icons.swift`) rather than shipped as opaque binary assets
 - Privacy: local-first analysis, Never Track list, prompt contents never touch disk
 - Multi-display: physical-notch first, compact top-center surface on other displays
 
@@ -112,7 +122,9 @@ Supported sources: **Apple Music** and **Spotify** via fully public/documented m
 
 ## Pomodoro
 
-Focus · 25:00 · Start. That's the whole interface. Durations, long-break cadence, auto-start, sound, and the completion interruption are configurable in Settings — and while idle, the +/- arrows beside the ring step through a quick-duration pool (5/15/25/30/50 min by default, editable in Settings → Pomodoro → Quick Durations) so you rarely need to leave the notch to change how long a session runs.
+Choose **Classic**, **Minimal**, or **Artwork**. Classic and Artwork place the time inside a centered progress ring; Minimal keeps the time centered with playback on the right. Soft gradients distinguish focus and break phases.
+
+Settings include focus, short-break, and long-break durations; sessions before a long break; automatic starts for breaks and focus; sound; and completion interruptions. Classic and Artwork use editable quick-duration presets (5/15/25/30/50 minutes by default). Minimal offers fixed 5/15/25/50-minute steps.
 
 ## Optional Context Awareness
 
@@ -185,14 +197,14 @@ All settings live in the Settings window (menu bar icon → Settings…). They p
 ## Testing
 
 ```bash
-make test    # 90 tests: engines, providers, persistence, normalization
+make test    # 110 tests: engines, providers, persistence, normalization
 ```
 
 Engines are testable without rendering the notch: schedulers and clocks are injected everywhere.
 
 ## Distribution & Release Process
 
-Releases are produced by `.github/workflows/release.yml` on `v*` tags: test → build → sign (Developer ID) → notarize → staple → DMG/ZIP → checksums → GitHub prerelease. Signing and notarization use repository secrets; without them the workflow produces clearly-marked unsigned drafts. Maintainer steps: [docs/RELEASING.md](docs/RELEASING.md).
+Releases are produced by `.github/workflows/release.yml` on `v*` tags: test → build → sign (Developer ID) → notarize → staple → DMG/ZIP → checksums → GitHub prerelease. Signing and notarization use repository secrets; without them the workflow produces clearly marked unsigned prereleases. Maintainer steps: [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Roadmap
 
