@@ -15,3 +15,10 @@
 /* The physical camera housing remains visible above every Glance screen. */
 .macbook .desktop>.notch{display:block;position:absolute;top:0;left:50%;transform:translateX(-50%);width:18cqw;height:2.5cqw;margin:0;background:#080909;border-radius:0 0 .7cqw .7cqw;z-index:5;pointer-events:none;box-shadow:0 1px 1px #0004}
 .desktop>.notch>span{display:block;position:absolute;top:50%;left:50%;width:.45cqw;height:.45cqw;margin:0;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#25313d,#090b0f 65%);box-shadow:0 0 0 1px #ffffff08}
+
+/* Glance expands from the camera cutout; its reserved top strip is black,
+   rather than drawing a second notch over a colored rectangular card. */
+.macbook .activity{isolation:isolate;border-radius:0 0 1.7cqw 1.7cqw;box-shadow:0 .65cqw 1.5cqw #17221830}
+.macbook .activity::after{content:'';position:absolute;inset:0 0 auto;height:calc(42 * var(--u));background:linear-gradient(#080909 0%,#080909 65%,#08090900 100%);z-index:2;pointer-events:none}
+.macbook .desktop>.notch{box-shadow:none;border-radius:0 0 .6cqw .6cqw}
+.macbook .desktop{border-radius:.65cqw .65cqw 0 0}
