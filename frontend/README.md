@@ -34,6 +34,6 @@ The MacBook notch preview follows the current SwiftUI source: 480-point expanded
 
 The hosted Pomodoro preview now matches the centered Classic layout, with full-notch sage/plum focus and blue/plum rest gradients. Claude uses a full-notch terracotta/plum background.
 
-## M4 device asset
+## Device illustration
 
-The hero now uses the actual front-view image of the MacBook Air (13-inch, M4, 2025) from [Apple Support](https://support.apple.com/en-us/102869). `macbook-m4.css` clips the front device from the original color lineup without modifying the source image. The notch activity remains an interactive web overlay. Image source: https://cdsassets.apple.com/live/7WUAS350/images/macbook-air/2025-macbook-air-13in-colors.png .
+The hero uses a responsive CSS MacBook illustration in `macbook-m4.css`, with a unified bezel, sage wallpaper, and interactive Glance preview. The Apple reference image remains in assets for design reference but is not rendered in the hero.

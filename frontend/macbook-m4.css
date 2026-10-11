@@ -1,24 +1,13 @@
-/* Apple Support's actual 2025 M4 Air front view, clipped in CSS from its color lineup. */
-.macbook{aspect-ratio:1090/660;background:url('assets/macbook-air-m4-2025.png') no-repeat left top;background-size:178.3486% auto;filter:drop-shadow(0 14px 20px #0002)}
-.macbook .desktop{position:absolute;top:3.18%;left:10.09%;width:79.82%;height:85.76%;aspect-ratio:auto;border:0;border-radius:0;margin:0;box-shadow:none;background:transparent}
-.desktop:after,.desktop-grain,.macbook-chin,.macbook-base,.device-shadow{display:none}
-.desktop-caption,.desktop-dock{display:none}
-.desktop-menu{background:#050b1640;color:#fff;height:2.5cqw}
-.activity{margin:calc(-32 * var(--u)) auto 0}
-@media(max-width:760px){.macbook .desktop{border:0;border-radius:0}.desktop-caption{display:none}}
-.macbook{clip-path:polygon(8.1% 0,91.7% 0,91.7% 95%,100% 95%,100% 100%,0 100%,0 95%,8.1% 95%)}
-
-/* Soft sage wallpaper echoes the landing page's paper and olive palette. */
-.macbook .desktop{background:radial-gradient(ellipse at 85% 110%,#d4d4a2 0,transparent 50%),radial-gradient(ellipse at 15% 100%,#8b9d7d 0,transparent 60%),linear-gradient(135deg,#687d67,#b6bfa0 70%,#d9d4b6)}
-.desktop-menu{background:#f4f5e51a;color:#f6f7ed}
-
-/* The physical camera housing remains visible above every Glance screen. */
-.macbook .desktop>.notch{display:block;position:absolute;top:0;left:50%;transform:translateX(-50%);width:18cqw;height:2.5cqw;margin:0;background:#080909;border-radius:0 0 .7cqw .7cqw;z-index:5;pointer-events:none;box-shadow:0 1px 1px #0004}
-.desktop>.notch>span{display:block;position:absolute;top:50%;left:50%;width:.45cqw;height:.45cqw;margin:0;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#25313d,#090b0f 65%);box-shadow:0 0 0 1px #ffffff08}
-
-/* Glance expands from the camera cutout; its reserved top strip is black,
-   rather than drawing a second notch over a colored rectangular card. */
-.macbook .activity{isolation:isolate;border-radius:0 0 1.7cqw 1.7cqw;box-shadow:0 .65cqw 1.5cqw #17221830}
-.macbook .activity::after{content:'';position:absolute;inset:0 0 auto;height:calc(42 * var(--u));background:linear-gradient(#080909 0%,#080909 65%,#08090900 100%);z-index:2;pointer-events:none}
-.macbook .desktop>.notch{box-shadow:none;border-radius:0 0 .6cqw .6cqw}
-.macbook .desktop{border-radius:.65cqw .65cqw 0 0}
+/* A single illustrated device keeps the bezel, wallpaper, and notch aligned. */
+.macbook{width:min(850px,78%);aspect-ratio:auto;background:none;filter:none;clip-path:none}
+.macbook .desktop{position:relative;inset:auto;width:100%;height:auto;aspect-ratio:1.6;margin:0;border:7px solid #111413;border-bottom:0;border-radius:16px 16px 0 0;box-shadow:0 0 0 1px #75807f,0 0 0 2px #bcc4c2,0 16px 40px #15231c25;background:radial-gradient(ellipse at 20% 120%,#d5d79e,transparent 65%),radial-gradient(ellipse at 80% 105%,#b8c9a0,transparent 60%),linear-gradient(135deg,#556950,#a5b58b)}
+.desktop:after,.desktop-grain,.desktop-caption,.desktop-dock{display:none}
+.macbook .desktop>.notch{display:block;position:absolute;top:0;left:50%;transform:translateX(-50%);width:14.85cqw;height:2.5cqw;margin:0;border-radius:0 0 .65cqw .65cqw;background:#080b09;z-index:5;pointer-events:none}
+.desktop>.notch>span{display:block;position:absolute;top:50%;left:50%;margin:0;width:.4cqw;height:.4cqw;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#203038,#080a0a 70%);box-shadow:none}
+.desktop-menu{height:2.5cqw;background:#ffffff12;color:#edf1e7}
+.macbook .activity{margin:calc(-32 * var(--u)) auto 0;isolation:isolate;border-radius:0 0 calc(22 * var(--u)) calc(22 * var(--u));box-shadow:0 .8cqw 2cqw #12221835}
+.macbook .activity::after{content:'';position:absolute;inset:0 0 auto;height:calc(40 * var(--u));background:linear-gradient(#080b09 0%,#080b09 65%,#080b0900);z-index:2;pointer-events:none}
+.macbook-chin{display:block;height:1.5cqw;background:linear-gradient(#111413,#1c201e);border-radius:0 0 .8cqw .8cqw;box-shadow:0 1px 0 2px #939d9b}
+.macbook-base{display:block;width:114%;margin-left:-7%;height:2.5cqw;background:linear-gradient(#dce1df,#a9b3b0 35%,#707b78 75%,#adb6b3);border-radius:.3cqw .3cqw 50% 50% / .3cqw .3cqw 80% 80%;box-shadow:0 1px 1px #f3f5f3 inset,0 5px 8px #15231c20}
+.device-shadow{display:block;bottom:-2cqw;height:2.5cqw;opacity:.5}
+@media(max-width:760px){.macbook{width:86%}.macbook .desktop{border-width:4px;border-bottom:0;border-radius:9px 9px 0 0}}
