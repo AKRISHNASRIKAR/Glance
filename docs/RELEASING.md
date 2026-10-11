@@ -16,8 +16,17 @@ Pushing a `v*` tag runs `.github/workflows/release.yml`:
 4. `notarytool submit --wait` + `stapler staple`
 5. `scripts/make-dmg.sh` — DMG (with /Applications shortcut), ZIP, SHA-256
    checksums
-6. GitHub prerelease with the artifacts. **Unsigned builds are published as
-   drafts only** — the workflow never fakes signing.
+6. GitHub prerelease with the artifacts. **Unsigned builds are publicly listed as clearly labeled prereleases** — the workflow never fakes signing or notarization. Partial signing configuration fails before building.
+
+## Recovering an existing tag
+
+A branch push runs CI; only a version-tag push creates a release. Tags retain the workflow at the tagged commit, so rerunning an old failed run does not pick up fixes from `main`. Recover an existing tag using the current workflow:
+
+```bash
+gh workflow run release.yml --ref main -f tag=v0.0.1
+```
+
+This checks out and builds the existing tag without moving it. For a new version, commit changes first, then push a new `vMAJOR.MINOR.PATCH` tag. Both paths run tests before publishing DMG, ZIP, and checksums. Without signing secrets, release notes explicitly identify an ad-hoc signed, unnotarized preview and its architecture.
 
 ## Required repository secrets
 

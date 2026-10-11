@@ -9,15 +9,20 @@
 #   NOTARY_TEAM_ID               Developer team ID
 #   NOTARY_PASSWORD              app-specific password for notarytool
 #
-# Without these secrets the workflow still produces UNSIGNED artifacts and
-# marks the release as a draft, so maintainers can't accidentally publish
-# unsigned builds.
+# Without signing secrets, publish an explicitly labeled ad-hoc signed
+# prerelease. Never describe that build as notarized.
 
 name: Release
 
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing version tag to build or recover (for example v0.0.1)
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -33,13 +38,28 @@ jobs:
       NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
       NOTARY_PASSWORD: ${{ secrets.NOTARY_PASSWORD }}
     steps:
+      - name: Validate release tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Expected vMAJOR.MINOR.PATCH"; exit 1; }
+          echo "RELEASE_TAG=$RELEASE_TAG" >> "$GITHUB_ENV"
+          echo "VERSION=${RELEASE_TAG#v}" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode_16.4.app || sudo xcode-select -s "$(ls -d /Applications/Xcode_16* | sort -V | tail -1)"
 
-      - name: Derive version from tag
-        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+      - name: Validate signing configuration
+        run: |
+          if [[ -n "$CODESIGN_IDENTITY$MACOS_CERTIFICATE_P12$MACOS_CERTIFICATE_PASSWORD$NOTARY_APPLE_ID$NOTARY_TEAM_ID$NOTARY_PASSWORD" ]]; then
+            for key in CODESIGN_IDENTITY MACOS_CERTIFICATE_P12 MACOS_CERTIFICATE_PASSWORD NOTARY_APPLE_ID NOTARY_TEAM_ID NOTARY_PASSWORD; do
+              [[ -n "${!key}" ]] || { echo "Incomplete signing configuration: missing $key"; exit 1; }
+            done
+          fi
 
       - name: Test
         run: swift test
@@ -90,11 +110,26 @@ jobs:
       - name: Package DMG + ZIP + checksums
         run: scripts/make-dmg.sh
 
+      - name: Describe build
+        run: |
+          if [[ -z "$CODESIGN_IDENTITY" ]]; then
+            echo "RELEASE_NAME=Glance $VERSION (unsigned preview)" >> "$GITHUB_ENV"
+            echo '**Unsigned preview:** this app is ad-hoc signed, not Developer ID signed or notarized. macOS Gatekeeper may block it. Use only if you trust this source; otherwise build from source or wait for a notarized release.' > release-notes.md
+          else
+            echo "RELEASE_NAME=Glance $VERSION" >> "$GITHUB_ENV"
+            echo 'Developer ID signed and notarized macOS build.' > release-notes.md
+          fi
+          echo "" >> release-notes.md
+          echo "Architecture: $(uname -m). Requires macOS 14 or later. Download the DMG or ZIP and verify it against the attached SHA-256 checksums." >> release-notes.md
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          # Unsigned builds stay drafts; signed+notarized builds publish.
-          draft: ${{ env.CODESIGN_IDENTITY == '' }}
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: ${{ env.RELEASE_NAME }}
+          body_path: release-notes.md
+          draft: false
+          fail_on_unmatched_files: true
           prerelease: true
           generate_release_notes: true
           files: |
