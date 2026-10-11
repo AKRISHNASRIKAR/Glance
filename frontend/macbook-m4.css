@@ -11,3 +11,10 @@
 .macbook-base{display:block;width:114%;margin-left:-7%;height:2.5cqw;background:linear-gradient(#dce1df,#a9b3b0 35%,#707b78 75%,#adb6b3);border-radius:.3cqw .3cqw 50% 50% / .3cqw .3cqw 80% 80%;box-shadow:0 1px 1px #f3f5f3 inset,0 5px 8px #15231c20}
 .device-shadow{display:block;bottom:-2cqw;height:2.5cqw;opacity:.5}
 @media(max-width:760px){.macbook{width:86%}.macbook .desktop{border-width:4px;border-bottom:0;border-radius:9px 9px 0 0}}
+
+/* Keep the camera cutout distinct in the center; Glance occupies its wings. */
+.macbook .activity::after{display:none}
+.macbook .desktop>.notch{width:14.85cqw;height:2.5cqw;border-radius:0 0 .8cqw .8cqw;background:#080b09;box-shadow:none}
+.macbook .desktop>.notch::before,.macbook .desktop>.notch::after{content:'';position:absolute;top:0;width:.6cqw;height:.6cqw;background:transparent}
+.macbook .desktop>.notch::before{left:-.6cqw;border-top-right-radius:.6cqw;box-shadow:.3cqw -.3cqw 0 .3cqw #080b09}
+.macbook .desktop>.notch::after{right:-.6cqw;border-top-left-radius:.6cqw;box-shadow:-.3cqw -.3cqw 0 .3cqw #080b09}
