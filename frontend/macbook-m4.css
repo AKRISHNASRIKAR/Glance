@@ -1,7 +1,7 @@
 /* Apple Support's actual 2025 M4 Air front view, clipped in CSS from its color lineup. */
 .macbook{aspect-ratio:1090/660;background:url('assets/macbook-air-m4-2025.png') no-repeat left top;background-size:178.3486% auto;filter:drop-shadow(0 14px 20px #0002)}
 .macbook .desktop{position:absolute;top:3.18%;left:10.09%;width:79.82%;height:85.76%;aspect-ratio:auto;border:0;border-radius:0;margin:0;box-shadow:none;background:transparent}
-.desktop:after,.desktop-grain,.macbook-chin,.macbook-base,.device-shadow,.desktop>.notch{display:none}
+.desktop:after,.desktop-grain,.macbook-chin,.macbook-base,.device-shadow{display:none}
 .desktop-caption,.desktop-dock{display:none}
 .desktop-menu{background:#050b1640;color:#fff;height:2.5cqw}
 .activity{margin:calc(-32 * var(--u)) auto 0}
@@ -11,3 +11,7 @@
 /* Soft sage wallpaper echoes the landing page's paper and olive palette. */
 .macbook .desktop{background:radial-gradient(ellipse at 85% 110%,#d4d4a2 0,transparent 50%),radial-gradient(ellipse at 15% 100%,#8b9d7d 0,transparent 60%),linear-gradient(135deg,#687d67,#b6bfa0 70%,#d9d4b6)}
 .desktop-menu{background:#f4f5e51a;color:#f6f7ed}
+
+/* The physical camera housing remains visible above every Glance screen. */
+.macbook .desktop>.notch{display:block;position:absolute;top:0;left:50%;transform:translateX(-50%);width:18cqw;height:2.5cqw;margin:0;background:#080909;border-radius:0 0 .7cqw .7cqw;z-index:5;pointer-events:none;box-shadow:0 1px 1px #0004}
+.desktop>.notch>span{display:block;position:absolute;top:50%;left:50%;width:.45cqw;height:.45cqw;margin:0;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle at 35% 30%,#25313d,#090b0f 65%);box-shadow:0 0 0 1px #ffffff08}
