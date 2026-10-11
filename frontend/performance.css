@@ -12,6 +12,15 @@
 .native-artwork{width:calc(72 * var(--u));height:calc(72 * var(--u))}
 .native-track{left:calc(82 * var(--u))}
 }
-.header-logo:hover img,.header-logo:focus-visible img{animation:logo-glitch .65s steps(1) 1}
-@keyframes logo-glitch{0%,100%{transform:none;filter:none}18%{transform:translateX(-2px);filter:drop-shadow(3px 0 #8ba6bc)}24%{transform:translateX(2px);filter:drop-shadow(-3px 0 #c2dba9)}30%,55%{transform:none;filter:none}60%{transform:translateX(-1px)}66%{transform:none}}
-@media(prefers-reduced-motion:reduce){.header-logo img{animation:none!important}}
+/* The selected Outline Morph, scaled to the header's existing footprint. */
+.header-morph{position:relative;display:block;width:60px;height:60px}
+.header-morph img{position:absolute;inset:0;animation:header-icon-fade 6s ease-in-out infinite}
+.header-outline{position:absolute;inset:9px;border:3px solid #173e40;border-radius:11px;opacity:0;animation:header-outline-fade 6s ease-in-out infinite}
+.header-outline:before{content:'';position:absolute;left:50%;top:-1px;transform:translateX(-50%);width:40%;height:10px;background:#173e40;border-radius:0 0 4px 4px}
+.header-morph{animation:header-icon-turn 6s ease-in-out infinite}
+.header-logo:hover img{transform:none}
+@keyframes header-icon-fade{0%,20%,90%,100%{opacity:1}40%,70%{opacity:0}}
+@keyframes header-outline-fade{0%,20%,90%,100%{opacity:0}40%,70%{opacity:1}}
+@keyframes header-icon-turn{0%,20%,100%{transform:none}45%,70%{transform:rotate(-8deg) scale(.9)}}
+@media(max-width:760px){.header-morph{width:48px;height:48px}.header-outline{inset:7px;border-width:2.5px;border-radius:9px}.header-outline:before{height:8px}}
+@media(prefers-reduced-motion:reduce){.header-morph,.header-morph img,.header-outline{animation:none!important}.header-morph img{opacity:1}.header-outline{display:none}}
