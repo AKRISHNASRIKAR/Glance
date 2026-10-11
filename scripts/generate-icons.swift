@@ -3,10 +3,8 @@
 // drawing code, so the mark can be regenerated or tweaked without a design
 // tool. Run: swift scripts/generate-icons.swift
 //
-// Mark: a capsule (the notch itself) with a centered indicator dot — the
-// same green "device in use" dot macOS shows beside a real notch, doubling
-// as a nod to "Live Activity". Full color for the Dock/Finder app icon,
-// monochrome silhouette (dot included) for the menu bar template image.
+// App icon: a midnight teal-to-navy rounded screen with a top-attached notch
+// and a live dot/equalizer. The menu bar keeps its monochrome capsule mark.
 
 import AppKit
 import CoreGraphics
@@ -38,62 +36,100 @@ private func dotPath(in rect: CGRect) -> CGPath {
 
 // MARK: - App icon (full color, squircle background)
 
-private func drawAppIcon(context ctx: CGContext, size: CGFloat) {
-    let rect = CGRect(x: 0, y: 0, width: size, height: size)
+private func drawAppIcon(context ctx: CGContext, size: CGFloat, variant: String = "midnight") {
     ctx.saveGState()
+    defer { ctx.restoreGState() }
+    let space = CGColorSpaceCreateDeviceRGB()
+    let tile = CGRect(x: size * 0.08, y: size * 0.08, width: size * 0.84, height: size * 0.84)
+    let radius = size * 0.19
+    let outline = CGPath(roundedRect: tile, cornerWidth: radius, cornerHeight: radius, transform: nil)
 
-    // Squircle background (macOS Big Sur+ corner ratio).
-    let cornerRadius = size * 0.2237
-    let bgPath = CGPath(roundedRect: rect, cornerWidth: cornerRadius, cornerHeight: cornerRadius, transform: nil)
-    ctx.addPath(bgPath)
+    ctx.setShadow(offset: CGSize(width: 0, height: -size * 0.012), blur: size * 0.025,
+                  color: CGColor(red: 0.03, green: 0.08, blue: 0.06, alpha: 0.3))
+    ctx.addPath(outline)
+    ctx.setFillColor(CGColor(red: 0.2, green: 0.32, blue: 0.26, alpha: 1))
+    ctx.fillPath()
+    ctx.setShadow(offset: .zero, blur: 0)
+    ctx.addPath(outline)
     ctx.clip()
 
-    let colorSpace = CGColorSpaceCreateDeviceRGB()
-    let bgColors = [
-        CGColor(red: 0.11, green: 0.11, blue: 0.12, alpha: 1),
-        CGColor(red: 0.0, green: 0.0, blue: 0.0, alpha: 1),
-    ] as CFArray
-    if let gradient = CGGradient(colorsSpace: colorSpace, colors: bgColors, locations: [0, 1]) {
-        ctx.drawLinearGradient(
-            gradient,
-            start: CGPoint(x: rect.midX, y: rect.maxY),
-            end: CGPoint(x: rect.midX, y: rect.minY),
-            options: []
-        )
+    let palette: [CGColor]
+    switch variant {
+    case "midnight": palette = [CGColor(red: 0.18, green: 0.34, blue: 0.35, alpha: 1), CGColor(red: 0.10, green: 0.20, blue: 0.25, alpha: 1), CGColor(red: 0.055, green: 0.10, blue: 0.145, alpha: 1)]
+    case "indigo": palette = [CGColor(red: 0.24, green: 0.23, blue: 0.44, alpha: 1), CGColor(red: 0.12, green: 0.13, blue: 0.25, alpha: 1), CGColor(red: 0.04, green: 0.065, blue: 0.11, alpha: 1)]
+    case "graphite", "orbit": palette = Array(repeating: CGColor(red: 0.085, green: 0.095, blue: 0.105, alpha: 1), count: 3)
+    case "porcelain": palette = Array(repeating: CGColor(red: 0.87, green: 0.89, blue: 0.84, alpha: 1), count: 3)
+    default: palette = [CGColor(red: 0.75, green: 0.85, blue: 0.65, alpha: 1), CGColor(red: 0.31, green: 0.53, blue: 0.43, alpha: 1), CGColor(red: 0.20, green: 0.24, blue: 0.32, alpha: 1)]
+    }
+    let colors = palette as CFArray
+    let gradient = CGGradient(colorsSpace: space, colors: colors, locations: [0, 0.48, 1])!
+    ctx.drawLinearGradient(gradient, start: CGPoint(x: tile.minX, y: tile.maxY),
+                           end: CGPoint(x: tile.maxX, y: tile.minY), options: [])
+
+    let glow = CGGradient(colorsSpace: space, colors: [
+        CGColor(red: 0.84, green: 0.77, blue: 0.92, alpha: 0.6),
+        CGColor(red: 0.84, green: 0.77, blue: 0.92, alpha: 0)
+    ] as CFArray, locations: [0, 1])!
+    if variant == "sage" { ctx.drawRadialGradient(glow, startCenter: CGPoint(x: tile.maxX, y: tile.minY), startRadius: 0,
+                           endCenter: CGPoint(x: tile.maxX, y: tile.minY), endRadius: size * 0.9, options: []) }
+
+    if variant == "orbit" {
+        let orbit = CGMutablePath()
+        orbit.addArc(center: CGPoint(x: size * 0.5, y: size * 0.5), radius: size * 0.23,
+                     startAngle: .pi * 0.62, endAngle: .pi * 2.38, clockwise: false)
+        ctx.addPath(orbit)
+        ctx.setStrokeColor(CGColor(red: 0.74, green: 0.88, blue: 0.63, alpha: 1))
+        ctx.setLineWidth(size * 0.045)
+        ctx.setLineCap(.round)
+        ctx.strokePath()
+        let cutout = CGRect(x: size * 0.42, y: size * 0.69, width: size * 0.16, height: size * 0.10)
+        ctx.addPath(CGPath(roundedRect: cutout, cornerWidth: size * 0.03, cornerHeight: size * 0.03, transform: nil))
+        ctx.setFillColor(CGColor(red: 0.74, green: 0.88, blue: 0.63, alpha: 1))
+        ctx.fillPath()
+        ctx.fillEllipse(in: CGRect(x: size * 0.477, y: size * 0.477, width: size * 0.046, height: size * 0.046))
+        return
     }
 
-    // Soft green glow behind the dot.
-    let dot = dotPath(in: rect).boundingBox
-    let glowCenter = CGPoint(x: dot.midX, y: dot.midY)
-    let glowColors = [
-        CGColor(red: 0.19, green: 0.84, blue: 0.35, alpha: 0.55),
-        CGColor(red: 0.19, green: 0.84, blue: 0.35, alpha: 0),
-    ] as CFArray
-    if let glow = CGGradient(colorsSpace: colorSpace, colors: glowColors, locations: [0, 1]) {
-        ctx.drawRadialGradient(
-            glow,
-            startCenter: glowCenter, startRadius: 0,
-            endCenter: glowCenter, endRadius: size * 0.22,
-            options: []
-        )
-    }
-
-    // Pill: translucent glass fill + light stroke.
-    let pill = pillPath(in: rect)
-    ctx.addPath(pill)
-    ctx.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 0.10))
+    // A camera notch, attached to the screen's top edge, with square top
+    // corners and rounded lower corners (the same silhouette as Glance).
+    let notchWidth = size * 0.48
+    let notchHeight = size * 0.20
+    let notchRadius = size * 0.055
+    let left = size / 2 - notchWidth / 2
+    let right = size / 2 + notchWidth / 2
+    let top = tile.maxY + size * 0.01
+    let bottom = tile.maxY - notchHeight
+    let notch = CGMutablePath()
+    notch.move(to: CGPoint(x: left, y: top))
+    notch.addLine(to: CGPoint(x: right, y: top))
+    notch.addLine(to: CGPoint(x: right, y: bottom + notchRadius))
+    notch.addQuadCurve(to: CGPoint(x: right - notchRadius, y: bottom), control: CGPoint(x: right, y: bottom))
+    notch.addLine(to: CGPoint(x: left + notchRadius, y: bottom))
+    notch.addQuadCurve(to: CGPoint(x: left, y: bottom + notchRadius), control: CGPoint(x: left, y: bottom))
+    notch.closeSubpath()
+    ctx.setShadow(offset: CGSize(width: 0, height: -size * 0.009), blur: size * 0.018,
+                  color: CGColor(red: 0, green: 0, blue: 0, alpha: 0.2))
+    ctx.addPath(notch)
+    ctx.setFillColor(CGColor(red: 0.035, green: 0.065, blue: 0.055, alpha: 1))
     ctx.fillPath()
-    ctx.addPath(pill)
-    ctx.setStrokeColor(CGColor(red: 1, green: 1, blue: 1, alpha: 0.65))
-    ctx.setLineWidth(size * 0.014)
+    ctx.setShadow(offset: .zero, blur: 0)
+
+    // Quiet activity mark in the notch: one live dot and three small bars.
+    ctx.setFillColor(CGColor(red: 0.74, green: 0.88, blue: 0.63, alpha: 1))
+    let dotSize = size * 0.033
+    ctx.fillEllipse(in: CGRect(x: size * 0.37 - dotSize / 2, y: bottom + notchHeight * 0.45 - dotSize / 2,
+                              width: dotSize, height: dotSize))
+    for (index, height) in [0.025, 0.055, 0.038].enumerated() {
+        let bar = CGRect(x: size * (0.565 + Double(index) * 0.022),
+                         y: bottom + notchHeight * 0.45 - size * height / 2,
+                         width: size * 0.01, height: size * height)
+        ctx.addPath(CGPath(roundedRect: bar, cornerWidth: size * 0.005, cornerHeight: size * 0.005, transform: nil))
+        ctx.fillPath()
+    }
+    ctx.addPath(outline)
+    ctx.setStrokeColor(CGColor(red: 1, green: 1, blue: 1, alpha: 0.18))
+    ctx.setLineWidth(size * 0.002)
     ctx.strokePath()
-
-    // Dot: solid system green, the focal point.
-    ctx.addPath(dotPath(in: rect))
-    ctx.setFillColor(CGColor(red: 0.19, green: 0.84, blue: 0.35, alpha: 1))
-    ctx.fillPath()
-
-    ctx.restoreGState()
 }
 
 private func renderPNG(size: Int, draw: (CGContext, CGFloat) -> Void) -> Data {
@@ -113,6 +149,35 @@ private func renderPNG(size: Int, draw: (CGContext, CGFloat) -> Void) -> Data {
         fatalError("could not encode png")
     }
     return data
+}
+
+if CommandLine.arguments.contains("--variants") {
+    let directory = repoRoot.appendingPathComponent("Resources/IconVariants")
+    try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+    for variant in ["midnight", "indigo", "graphite", "porcelain", "orbit"] {
+        let png = renderPNG(size: 512) { context, size in drawAppIcon(context: context, size: size, variant: variant) }
+        try png.write(to: directory.appendingPathComponent("\(variant).png"))
+    }
+    let variants = ["midnight", "indigo", "graphite", "porcelain", "orbit"]
+    let names = ["1. Midnight · gradient", "2. Indigo · gradient", "3. Graphite · flat", "4. Porcelain · flat", "5. Orbit · alternative"]
+    let sheet = renderPNG(size: 1024) { context, _ in
+        context.setFillColor(CGColor(red: 0.95, green: 0.95, blue: 0.93, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: 1024, height: 1024))
+        let positions: [CGPoint] = [CGPoint(x: 40, y: 590), CGPoint(x: 370, y: 590), CGPoint(x: 700, y: 590), CGPoint(x: 205, y: 190), CGPoint(x: 535, y: 190)]
+        for index in variants.indices {
+            context.saveGState()
+            context.translateBy(x: positions[index].x, y: positions[index].y)
+            drawAppIcon(context: context, size: 280, variant: variants[index])
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
+            (names[index] as NSString).draw(at: CGPoint(x: 15, y: -25), withAttributes: [.font: NSFont.systemFont(ofSize: 17, weight: .medium), .foregroundColor: NSColor.darkGray])
+            NSGraphicsContext.restoreGraphicsState()
+            context.restoreGState()
+        }
+    }
+    try sheet.write(to: directory.appendingPathComponent("comparison.png"))
+    print("Generated icon options in \(directory.path)")
+    exit(0)
 }
 
 // MARK: - iconset -> icns
