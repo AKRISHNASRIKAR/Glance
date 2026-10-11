@@ -37,3 +37,7 @@ The hosted Pomodoro preview now matches the centered Classic layout, with full-n
 ## Device illustration
 
 The hero uses a responsive CSS MacBook illustration in `macbook-m4.css`, with a unified bezel, sage wallpaper, and interactive Glance preview. The Apple reference image remains in assets for design reference but is not rendered in the hero.
+
+## Frontend assets and CSS
+
+After editing any landing-page CSS source, run `python3 scripts/bundle-frontend.py` from the repository root to regenerate `site.css`. The header uses a 120-pixel WebP icon; the music preview uses compressed WebP with an early preload. Native app and README image assets retain their original resolution. `icon-lab.html` contains three optional animation studies with a pause control and Reduce Motion support.

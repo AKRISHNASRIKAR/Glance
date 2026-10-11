@@ -1,0 +1,17 @@
+:root{--muted:#596159}
+.hero-copy,.requirements,.preview-controls>span,.demo-note,footer>span,footer>div,.preview-controls button{color:#596159}
+@media(max-width:760px){
+.macbook{--u:.12cqw}
+.macbook .activity{width:calc(480 * var(--u));height:calc(180 * var(--u));margin-top:-2.5cqw}
+.native-transport{gap:8px;top:calc(32 * var(--u))}
+.native-transport button{min-width:24px;height:24px;padding:0}
+.native-source{display:none}
+.native-pager{bottom:2px;gap:8px}
+.native-pager button{width:24px;height:24px;min-width:24px}
+.native-progress{top:calc(94 * var(--u))}.native-time{top:calc(102 * var(--u))}
+.native-artwork{width:calc(72 * var(--u));height:calc(72 * var(--u))}
+.native-track{left:calc(82 * var(--u))}
+}
+.header-logo:hover img,.header-logo:focus-visible img{animation:logo-glitch .65s steps(1) 1}
+@keyframes logo-glitch{0%,100%{transform:none;filter:none}18%{transform:translateX(-2px);filter:drop-shadow(3px 0 #8ba6bc)}24%{transform:translateX(2px);filter:drop-shadow(-3px 0 #c2dba9)}30%,55%{transform:none;filter:none}60%{transform:translateX(-1px)}66%{transform:none}}
+@media(prefers-reduced-motion:reduce){.header-logo img{animation:none!important}}
