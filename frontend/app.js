@@ -8,6 +8,7 @@ function selectTab(tab) {
   }
   document.getElementById('activity-panel').setAttribute('aria-labelledby', tab.id);
   const screen = document.getElementById(`screen-${tab.dataset.screen}`);
+  document.querySelectorAll('[data-demo-controls]').forEach(group => { group.hidden = group.dataset.demoControls !== tab.dataset.screen; });
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) screen.animate([{opacity:0, transform:'translateY(4px)'},{opacity:1, transform:'translateY(0)'}], {duration:280, easing:'cubic-bezier(.2,.7,.2,1)'});
   document.getElementById('activity-panel').classList.toggle('artwork-preview', tab.dataset.screen === 'music');
   document.getElementById('activity-panel').dataset.screen = tab.dataset.screen;
@@ -135,3 +136,51 @@ if (!motionPreference.matches && 'IntersectionObserver' in window) {
     if (event.matches) { revealTargets.forEach(element => element.classList.add('revealed')); observer.disconnect(); }
   });
 }
+
+// Mobile navigation disclosure and full-size demo controls.
+const menuToggle = document.querySelector('.menu-toggle');
+const mobileMenu = document.getElementById('mobile-menu');
+function closeMenu(returnFocus = false) {
+  mobileMenu.hidden = true;
+  menuToggle.setAttribute('aria-expanded', 'false');
+  if (returnFocus) menuToggle.focus();
+}
+menuToggle.addEventListener('click', () => {
+  const open = menuToggle.getAttribute('aria-expanded') !== 'true';
+  menuToggle.setAttribute('aria-expanded', String(open));
+  mobileMenu.hidden = !open;
+});
+mobileMenu.addEventListener('click', event => { if (event.target.closest('a')) closeMenu(); });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !mobileMenu.hidden) closeMenu(true); });
+const mobileControls = document.createElement('div');
+mobileControls.className = 'demo-mobile-controls';
+mobileControls.dataset.demoControls = 'music';
+mobileControls.setAttribute('aria-label', 'Music demo controls');
+for (const [label, target] of [['Previous track', '[data-transport="previous"]'], ['Play / pause', '#play-toggle'], ['Next track', '[data-transport="next"]']]) {
+  const button = document.createElement('button');
+  button.textContent = label;
+  button.addEventListener('click', () => document.querySelector(target).click());
+  mobileControls.append(button);
+}
+document.querySelector('.preview-controls').after(mobileControls);
+for (const tab of tabs) tab.addEventListener('click', () => { mobileControls.hidden = tab.dataset.screen !== 'music'; });
+const artworkCheck = new Image();
+artworkCheck.onload = () => document.getElementById('activity-panel').removeAttribute('aria-busy');
+artworkCheck.onerror = () => {
+  document.getElementById('activity-panel').removeAttribute('aria-busy');
+  document.getElementById('demo-note').textContent = 'Artwork could not load. Playback and timer demos are still available.';
+};
+document.getElementById('activity-panel').setAttribute('aria-busy', 'true');
+artworkCheck.src = 'assets/now-playing-reference.webp';
+
+const focusControls = document.createElement('div');
+focusControls.className = 'demo-mobile-controls';
+focusControls.dataset.demoControls = 'focus';
+focusControls.hidden = true;
+focusControls.setAttribute('aria-label', 'Timer demo controls');
+for (const [label, target] of [['Shorter', '#duration-down'], ['Start / pause', '#timer-toggle'], ['Longer', '#duration-up'], ['Reset', '#timer-reset']]) {
+  const button = document.createElement('button'); button.textContent = label;
+  button.addEventListener('click', () => document.querySelector(target).click());
+  focusControls.append(button);
+}
+mobileControls.after(focusControls);
