@@ -19,6 +19,7 @@ final class SettingsWindowController {
                 .environmentObject(coordinator.screens)
                 .environmentObject(coordinator.activity)
                 .environmentObject(coordinator.claudeCode)
+                .environmentObject(coordinator.browser)
             let hosting = NSHostingController(rootView: AnyView(root))
             let window = NSWindow(contentViewController: hosting)
             window.title = "Glance Settings"
@@ -44,6 +45,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     case activities = "Activities"
     case contextAwareness = "Context Awareness"
     case claudeCode = "Claude Code"
+    case browser = "Browser Focus"
     case privacy = "Privacy"
     case about = "About"
 
@@ -58,6 +60,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .activities: return "sparkles"
         case .contextAwareness: return "brain"
         case .claudeCode: return "terminal"
+        case .browser: return "globe"
         case .privacy: return "hand.raised"
         case .about: return "info.circle"
         }
@@ -93,6 +96,7 @@ struct SettingsRootView: View {
         case .activities: ActivitiesPane()
         case .contextAwareness: ContextPane()
         case .claudeCode: ClaudeCodePane()
+        case .browser: BrowserPane()
         case .privacy: PrivacyPane()
         case .about: AboutPane()
         }

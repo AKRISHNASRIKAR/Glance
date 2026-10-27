@@ -1,10 +1,10 @@
 # Privacy
 
-> Your Mac activity is analysed locally. Activity data does not leave this
-> Mac unless an explicitly enabled integration requires external
-> communication.
+> Mac activity is analysed locally. The optional Chrome companion shares
+> focus state and opted-in domain statistics between your browser and Mac.
+> There is no activity upload service.
 
-## Network traffic, exhaustively
+## Network traffic
 
 | Feature | Traffic |
 |---|---|
@@ -13,6 +13,8 @@
 | Spotify integration | HTTPS GET of album artwork from Spotify's image CDN (the artwork URL Spotify itself reports). Off if Now Playing is disabled. |
 | System-wide Now Playing (Experimental, off by default) | none — local IPC to a system daemon (MediaRemote) only, same as Control Center's widget. Reads title/artist/album/artwork of whatever any app is playing, system-wide, while enabled. |
 | Context awareness, coding context, battery, network, Claude Code | none |
+| Optional Chrome companion | Local Native Messaging / Unix socket to Glance; no activity upload endpoint |
+| Marketing website and hosted dashboard | Static assets from the website host and Google Fonts. Hosting providers receive ordinary request metadata. Dashboard activity access requires explicit extension authorization; activity is not sent to the website host. |
 
 There is no telemetry, no crash reporting, no update phone-home (Sparkle is
 not integrated yet; when it is, it will be documented here first).
@@ -32,7 +34,8 @@ not integrated yet; when it is, it will be documented here first).
 - source code contents
 - clipboard contents
 - tokens, API keys
-- window titles, browser history/domains, terminal processes (not even read)
+- window titles and terminal processes (not read by context observation)
+- page contents, URL paths, search queries and keystrokes (the optional extension reads domains only)
 - track titles or any user content in the unified log (log lines carry state
   names and counts only)
 
@@ -41,7 +44,7 @@ not integrated yet; when it is, it will be documented here first).
 - **Never Track list** (Settings → Privacy): bundle identifiers Glance must
   ignore in every context feature, with an "Add Frontmost Application"
   shortcut.
-- All observation features are **off by default**; enabling one is explicit.
+- Context observation and website usage tracking require explicit opt-in. Blocking permission and usage tracking permission are separate.
 - Interruptions carry a privacy classification; `sensitive` ones (e.g. the
   Claude permission message) are marked in the model. Automatic redaction
   while screen sharing is **Planned** — macOS offers no reliable public "am I
@@ -72,3 +75,11 @@ public alternative (see docs/NOW_PLAYING.md). It is the **only** place in
 the codebase that touches a private API, it is not loaded into the process
 until the user explicitly enables it, and it reads only media metadata —
 the same information Control Center already surfaces.
+
+## Optional browser companion
+
+Glance Focus stores website rules, session state, per-profile permissions and an event journal in `chrome.storage.local`, not cloud-sync storage. When usage tracking is enabled, it records domain-level active time, focus sessions and blocked-site attempts. Only an active tab in a focused normal window counts, while Chrome reports the system active (60-second idle threshold). Internal pages, local addresses and private windows are excluded. Time is approximate; crashes can lose the latest checkpoint. Activity is retained for 30 days.
+
+When paired, the Mac is the source of truth for the timer and shared preferences. Files under `~/Library/Application Support/Glance/Browser/` include `focus-preferences.json` (rules and tracking preferences), `statistics.json` (activity) and local bridge credentials/configuration. They use owner-only file permissions; Glance does not encrypt these files. Do not share them in issues or commit them. Native Pomodoro configuration remains in the app's `settings.json`.
+
+The extension requests Native Messaging, storage, alarms and declarative website-blocking access. Site permissions are granted per website; optional `tabs` and `idle` permissions enable usage stats. You can pause tracking, exclude domains, export or delete statistics and revoke web-dashboard access in extension settings. Pairing and new permission grants remain in extension-owned UI. The web dashboard is not a cloud database and has no signup. See [Browser Focus release notes](releases/v0.2.0.md) for the app release scope.

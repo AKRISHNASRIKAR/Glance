@@ -64,6 +64,9 @@ public final class PomodoroEngine: ObservableObject {
         }
     }
 
+    /// Read-only deadline for the optional local browser companion.
+    public var scheduledEndDate: Date? { phaseEndDate }
+
     public var phaseDuration: TimeInterval { duration(of: phase) }
 
     /// 0...1 progress through the current phase.

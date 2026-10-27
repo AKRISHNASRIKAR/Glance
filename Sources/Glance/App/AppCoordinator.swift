@@ -20,6 +20,7 @@ final class AppCoordinator: ObservableObject {
     let context: ContextProvider
     let codingContext: CodingContextProvider
     let claudeCode: ClaudeCodeProvider
+    let browser: BrowserCompanion
 
     private var cancellables: Set<AnyCancellable> = []
 
@@ -37,6 +38,17 @@ final class AppCoordinator: ObservableObject {
         self.context = ContextProvider(settings: settings)
         self.codingContext = CodingContextProvider(settings: settings)
         self.claudeCode = ClaudeCodeProvider(settings: settings)
+
+        self.browser = BrowserCompanion(engine:pomodoro.engine,settings:settings)
+        browser.approvePairing = { _ in
+            NSApp.activate()
+            let alert=NSAlert()
+            alert.messageText="Connect this Chrome profile to Glance?"
+            alert.informativeText="Allow the Glance Focus extension to control your Pomodoro timer and share domain-level usage statistics locally with this Mac. No account or cloud upload is used."
+            alert.addButton(withTitle:"Allow connection")
+            alert.addButton(withTitle:"Cancel")
+            return alert.runModal() == .alertFirstButtonReturn
+        }
 
         activity.register(nowPlaying) { $0.nowPlaying.isEnabled }
         activity.register(pomodoro) { _ in true } // Pomodoro is a core Screen.
@@ -86,6 +98,7 @@ final class AppCoordinator: ObservableObject {
     }
 
     func shutdown() {
+        browser.stop()
         activity.stopAll()
         settings.saveNow()
     }

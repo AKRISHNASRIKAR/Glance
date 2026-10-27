@@ -9,6 +9,7 @@ let package = Package(
     products: [
         .library(name: "GlanceKit", targets: ["GlanceKit"]),
         .executable(name: "Glance", targets: ["Glance"]),
+        .executable(name: "GlanceBrowserBridge", targets: ["GlanceBrowserBridge"]),
     ],
     targets: [
         // GlanceKit: engines, models, providers. Headless and fully testable —
@@ -24,6 +25,8 @@ let package = Package(
             path: "Sources/Glance",
             resources: [.copy("Resources/MenuBarIcon.pdf")]
         ),
+        .executableTarget(name: "GlanceBrowserBridge", dependencies: ["GlanceKit"], path: "Sources/GlanceBrowserBridge"),
+        .executableTarget(name: "GlanceBrowserHarness", dependencies: ["GlanceKit"], path: "browser-extension/native-tests"),
         .testTarget(
             name: "GlanceKitTests",
             dependencies: ["GlanceKit"],

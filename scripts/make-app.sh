@@ -11,7 +11,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-VERSION="${VERSION:-0.1.0}"
+VERSION="${VERSION:-0.2.0}"
 BUNDLE_ID="${BUNDLE_ID:-app.glance.Glance}"
 DIST=dist
 APP="$DIST/Glance.app"
@@ -22,6 +22,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 cp .build/release/Glance "$APP/Contents/MacOS/Glance"
+cp .build/release/GlanceBrowserBridge "$APP/Contents/MacOS/GlanceBrowserBridge"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
 # SwiftPM resource bundle (menu bar glyph) — Bundle.module looks for this
