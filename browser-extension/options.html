@@ -1,0 +1,42 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Glance Focus | Options</title><link rel="icon" href="icons/outline-48.png"><link rel="stylesheet" href="ui.css"><script type="module" src="src/ui.js"></script></head><body data-page="options"><main><header><img src="icons/outline-48.png" alt=""><div><h1>Glance Focus</h1><span id="connection" class="status">Loading local state…</span></div></header>
+<div id="feedback" role="status" aria-live="polite"></div>
+<div class="stack">
+<section class="timer"><div id="phase" class="phase">Focus</div><div id="time" class="time" aria-label="Time remaining">--:--</div><div class="actions"><select id="minutes" aria-label="Focus duration"><option value="5">5 minutes</option><option value="15">15 minutes</option><option value="25" selected>25 minutes</option><option value="50">50 minutes</option></select><button id="primary" class="primary" disabled>Loading…</button><button id="stop" hidden>End</button></div><p id="blocking" class="muted">Your timer and block list stay on this device.</p></section>
+<section class="card"><h2>Blocked websites</h2><form id="add-form"><div class="row"><input id="domain" type="text" placeholder="youtube.com" aria-label="Website domain" required autocomplete="off" maxlength="300"><button type="submit">Add</button></div><label><input type="checkbox" id="subdomains" checked>Include subdomains</label><p id="domain-error" class="danger" role="alert"></p></form><button id="add-current" class="popup-only">Add current website</button><ul id="sites"></ul><p id="sites-empty" class="empty">No websites added. Add a domain to block it during focus.</p></section>
+<section class="card wide"><div class="row"><h2 id="activity-title">Your activity</h2><button id="tracking">Enable usage stats</button></div><p id="tracking-description">Optional: measure active website time while Chrome is focused and you are not idle. Only domains and durations are stored locally.</p><div class="metrics"><div class="metric"><strong id="focus-total">0m</strong><span>Focus time</span></div><div class="metric"><strong id="sessions-total">0</strong><span>Completed sessions</span></div><div class="metric"><strong id="blocked-total">0</strong><span>Blocked-page visits</span></div></div><h3>Website time · last 30 days</h3><ul id="usage"></ul><p id="usage-empty" class="empty">No active website time recorded yet.</p><p class="muted">Background tabs, private windows, idle time, local addresses and Chrome pages are excluded. Times are approximate; a crash can lose the latest checkpoint.</p><div class="options-only"><h3>Daily activity</h3><ul id="daily"></ul><p class="muted">Daily usage is grouped in this browser’s local time. Focus sessions are grouped by finish date. The daily list is for this browser profile.</p><h3>Tracking exclusions</h3><form id="exclude-form" class="row"><input id="exclude-domain" aria-label="Domain to exclude from tracking" placeholder="example.com"><button>Add exclusion</button></form><ul id="exclusions"></ul><div class="actions"><button id="export">Export local data</button><button id="clear" class="danger">Delete stats</button></div><div id="confirm-clear" hidden><p>Delete your local statistics? The paired Mac copy will be purged when it reconnects. Your block list stays.</p><button id="confirm-delete" class="danger">Delete statistics</button><button id="cancel-delete">Cancel</button></div></div></section>
+<section class="card wide" id="pomodoro-settings"><h2>Pomodoro settings</h2><p class="muted">Saved on your Mac. Duration changes apply to the next session; an active countdown keeps its deadline.</p><form id="pomodoro-form" class="settings-grid" hidden>
+<label>Focus minutes<input id="setting-focusDuration" type="number" min="1" max="120" required></label>
+<label>Short break minutes<input id="setting-shortBreakDuration" type="number" min="1" max="120" required></label>
+<label>Long break minutes<input id="setting-longBreakDuration" type="number" min="1" max="120" required></label>
+<label>Sessions before long break<input id="setting-sessionsBeforeLongBreak" type="number" min="1" max="12" required></label>
+<label>Timer appearance<select id="setting-appearance"><option value="classic">Classic</option><option value="minimal">Minimal</option><option value="artwork">Artwork</option></select></label>
+<label>Minute presets, separated by commas<input id="setting-durationPresetsMinutes" required maxlength="60"></label>
+<label><input id="setting-autoStartBreak" type="checkbox">Start breaks automatically</label>
+<label><input id="setting-autoStartFocus" type="checkbox">Start focus automatically</label>
+<label><input id="setting-soundEnabled" type="checkbox">Completion sound</label>
+<label><input id="setting-interruptionOnCompletion" type="checkbox">Completion notification</label>
+<button class="primary" type="submit">Save on Mac</button><button type="button" id="reload-pomodoro">Reload from Mac</button></form></section>
+<section class="card wide connection-panel" id="mac-connection" data-state="standalone" aria-labelledby="bridge-title">
+<div class="connection-art" aria-hidden="true">
+<svg viewBox="0 0 560 230" class="connection-diagram" focusable="false">
+<rect class="device-shell" x="24" y="55" width="152" height="120" rx="14"/><path class="device-line" d="M24 87h152"/>
+<circle class="device-dot" cx="42" cy="71" r="3"/><circle class="device-dot" cx="54" cy="71" r="3"/><circle class="device-dot" cx="66" cy="71" r="3"/>
+<rect class="device-surface" x="42" y="104" width="52" height="52" rx="10"/><path class="device-symbol" d="M56 116h24v26H56zM63 116v6h10v-6"/>
+<path class="device-line" d="M108 113h48m-48 13h36m-36 13h42"/>
+<path class="connection-wire" d="M191 116h151"/>
+<circle class="connection-hub" cx="267" cy="116" r="19"/><path class="connection-check" d="m259 116 6 6 11-12"/>
+<circle class="connection-signal" cx="227" cy="116" r="3"/><circle class="connection-signal" cx="307" cy="116" r="3"/>
+<rect class="device-shell" x="358" y="39" width="170" height="123" rx="12"/>
+<rect class="device-surface" x="367" y="48" width="152" height="105" rx="5"/>
+<path class="device-notch" d="M422 48h42v9a5 5 0 0 1-5 5h-32a5 5 0 0 1-5-5z"/>
+<rect class="mini-notch" x="412" y="76" width="62" height="34" rx="10"/><path class="device-line" d="M425 91h36m-36 7h24"/>
+<path class="device-shell" d="M346 162h194v7c-9 8-22 10-36 10H382c-14 0-27-2-36-10z"/><path class="device-line" d="M420 163h46"/>
+<text x="100" y="210" text-anchor="middle">Chrome</text><text x="443" y="210" text-anchor="middle">Glance on your Mac</text>
+</svg>
+</div>
+<div class="connection-copy"><span class="connection-state" id="bridge-state">Optional connection</span><h2 id="bridge-title">Connect your Mac</h2><p id="bridge-message">Bring your focus session and browser activity together.</p><ul class="connection-benefits"><li>One shared timer</li><li>Synced website rules</li><li>Activity kept local</li></ul>
+<div class="actions connection-actions"><button id="connect" class="primary">Connect to Glance</button><button id="use-mac" hidden>Use Mac timer</button><button id="standalone" hidden>Use standalone</button><button id="emergency" class="danger" hidden>Emergency stop</button><a id="pairing-help" href="https://glance-notch.vercel.app/extension/#setup" class="connection-help">How to pair ↗</a></div></div>
+<div id="connection-warning" class="notice warn connection-wide" hidden></div>
+<details class="options-only connection-wide"><summary>Setup and privacy</summary><p>In Glance Settings, choose Browser Focus → Enable browser connection. Then choose Connect to Glance in the extension and approve pairing on your Mac.</p><p>Each browser grants its own website and usage permissions. Your activity stays on your devices.</p></details>
+</section>
+</div><a id="options" class="section-link popup-only" href="options.html" target="_blank">Dashboard and settings ↗</a><div class="actions"><button id="open-dashboard">Open web dashboard</button><button id="revoke-dashboard">Disconnect web dashboard</button></div></main></body></html>

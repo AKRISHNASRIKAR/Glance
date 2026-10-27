@@ -1,0 +1,16 @@
+{
+  "name": "glance-focus-extension",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/core.test.js",
+    "test:e2e": "node tests/browser.test.js",
+    "package": "python3 ../scripts/package-extension.py",
+    "test:blocked": "node tests/blocked-page.test.js",
+    "test:responsive": "node tests/responsive.test.js"
+  },
+  "devDependencies": {
+    "playwright": "1.64.1"
+  }
+}

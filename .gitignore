@@ -1,9 +1,35 @@
+# macOS and Swift build products
 .DS_Store
 .build/
 dist/
 *.xcodeproj
 .swiftpm/
+
+# Credentials and local deployment state
+.env
+.env.*
+!.env.example
+.vercel/
+*.pem
+*.key
 *.p12
 *.provisionprofile
-# Sparkle private keys must never be committed
 *ed25519*
+
+# Dependencies, browser profiles and generated test evidence
+node_modules/
+.test-results/
+test-results/
+playwright-report/
+*.log
+*.trace
+
+# Local video production and personal working material
+project-walkthrough/
+local-artifacts/
+*.mov
+*.mp4
+
+# Python script caches
+__pycache__/
+*.py[cod]

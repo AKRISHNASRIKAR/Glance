@@ -4,24 +4,46 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#ffffff">
-  <meta name="description" content="Glance turns your Mac's notch into a quiet home for music, focus, and the moments that need your attention. Local-first and open source.">
-  <title>Glance | A little space for what matters.</title>
+  <meta name="description" content="Music, Pomodoro and optional context in your MacBook notch. Explore Glance for Mac and its local-first Chrome focus companion.">
+  <title>Glance | Your MacBook notch, with a purpose</title>
   <link rel="icon" href="assets/logo.webp">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="site.css">
+  <link rel="stylesheet" href="landing.css">
   <link rel="preload" as="image" href="assets/now-playing-reference.webp" fetchpriority="high">
+  <script src="navigation.js" defer></script>
   <script src="app.js" defer></script>
+<!-- BEGIN GENERATED DISCOVERY -->
+<link rel="canonical" href="https://glance-notch.vercel.app/">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Glance">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://glance-notch.vercel.app/">
+<meta property="og:title" content="Glance | Your MacBook notch, with a purpose">
+<meta property="og:description" content="Music, Pomodoro and optional context in your MacBook notch. Explore Glance for Mac and its local-first Chrome focus companion.">
+<meta property="og:image" content="https://glance-notch.vercel.app/assets/social-glance.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Glance product preview">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Glance | Your MacBook notch, with a purpose">
+<meta name="twitter:description" content="Music, Pomodoro and optional context in your MacBook notch. Explore Glance for Mac and its local-first Chrome focus companion.">
+<meta name="twitter:image" content="https://glance-notch.vercel.app/assets/social-glance.png">
+<script type="application/ld+json">{"@context": "https://schema.org", "@graph": [{"@type": "WebSite", "@id": "https://glance-notch.vercel.app/#website", "url": "https://glance-notch.vercel.app/", "name": "Glance", "inLanguage": "en"}, {"@type": "WebPage", "@id": "https://glance-notch.vercel.app/#webpage", "url": "https://glance-notch.vercel.app/", "name": "Glance | Your MacBook notch, with a purpose", "description": "Music, Pomodoro and optional context in your MacBook notch. Explore Glance for Mac and its local-first Chrome focus companion.", "isPartOf": {"@id": "https://glance-notch.vercel.app/#website"}}, {"@type": "SoftwareApplication", "name": "Glance", "url": "https://glance-notch.vercel.app/", "operatingSystem": "macOS", "applicationCategory": "ProductivityApplication", "description": "Music, Pomodoro and optional context in your MacBook notch. Explore Glance for Mac and its local-first Chrome focus companion.", "license": "https://github.com/AKRISHNASRIKAR/Glance/blob/main/LICENSE"}]}</script>
+<link rel="stylesheet" href="/grain.css">
+<!-- END GENERATED DISCOVERY -->
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header wrap">
     <a class="header-about header-logo" href="#experience" aria-label="Meet Glance"><span class="header-morph"><img src="assets/logo.webp" width="60" height="60" alt="Glance"><span class="header-outline" aria-hidden="true"></span></span></a>
     <a class="brand" href="#" aria-label="Glance home">glance<span class="brand-dot">.</span></a>
+    <nav class="desktop-links" aria-label="Main navigation"><a href="#experience">Features</a><a href="extension/">Browser extension</a></nav>
     <a class="header-download" href="https://github.com/AKRISHNASRIKAR/Glance/releases">Get Glance <span aria-hidden="true">↗</span></a>
     <button class="menu-toggle" aria-expanded="false" aria-controls="mobile-menu">Menu</button>
-    <nav id="mobile-menu" class="mobile-menu" aria-label="Mobile navigation" hidden><a href="#experience">Features</a><a href="#install">Installation</a><a href="icon-lab.html">Icon studies</a><a href="https://github.com/AKRISHNASRIKAR/Glance/releases">Get Glance</a></nav>
+    <nav id="mobile-menu" class="mobile-menu" aria-label="Mobile navigation" hidden><a href="#experience">Features</a><a href="#install">Installation</a><a href="extension/">Browser extension</a><a href="extension/dashboard/">Focus dashboard</a><a href="icon-lab.html">Icon studies</a><a href="https://github.com/AKRISHNASRIKAR/Glance/releases">Get Glance</a></nav>
   </header>
   <main id="main">
     <section class="hero wrap">
@@ -74,9 +96,14 @@
     <section class="experience wrap" id="experience"><div class="section-intro"><p class="eyebrow">RIGHT THERE. ONLY WHEN YOU NEED IT.</p><h2>In the flow.<br><em>Out of the way.</em></h2><p>Start with music and a focus timer. Add what helps.<br>You choose what earns a place in your notch.</p></div>
       <div class="feature-grid"><article><span class="feature-number">01 / SOUNDTRACK</span><div class="feature-art sound-art" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><h3>Your music, within reach.</h3><p>Apple Music and Spotify, with artwork, real playback progress, and controls. Track changes simply settle into place.</p></article><article><span class="feature-number">02 / HEADSPACE</span><div class="feature-art focus-art" aria-hidden="true"><span>25<span>:00</span></span></div><h3>Make room for focus.</h3><p>Make the timer yours: Classic, Minimal, or Artwork appearance; custom focus, short-break, and long-break durations; editable minute presets for Classic and Artwork (Minimal offers 5, 15, 25, and 50 minutes); sessions before a long break; automatic starts for breaks and focus; sound; and a notch alert when a session finishes.</p></article><article><span class="feature-number">03 / A LITTLE NUDGE</span><div class="feature-art nudge-art" aria-hidden="true"><span>✳</span><div>Claude needs your input<small>When it’s your turn, you’ll know.</small></div><i></i></div><h3>Catch the moments that count.</h3><p>Opt into Claude Code, battery, or network events. Temporary, prioritized interruptions return you to where you were.</p></article></div>
     </section>
-    <section class="principles wrap" id="principles"><div><p class="eyebrow">SMALL BY DESIGN</p><h2>Your attention is precious.<br><em>We treat it that way.</em></h2><p>One focused screen at a time. Quiet by default.<br>No dashboard to manage. Just a little more breathing room.</p><a class="text-link" href="https://github.com/AKRISHNASRIKAR/Glance#why-this-project-exists">Read the philosophy ↗</a></div><div class="principle-list"><article><span>↗</span><div><h3>Your Mac. Your business.</h3><p>Activity analysis stays local. Spotify artwork can be fetched from its CDN. You decide which optional providers run.</p></div></article><article><span>＋</span><div><h3>Only what you choose.</h3><p>Add, reorder, or disable screens. Context awareness and coding activity are opt-in.</p></div></article><article><span>⌘</span><div><h3>Notch optional.</h3><p>On a display without a notch, Glance finds a compact home at the top center.</p></div></article></div></section>
+
+    <section class="extension-feature wrap" id="browser-extension" aria-labelledby="extension-heading">
+      <div><p class="eyebrow">YOUR FOCUS, ACROSS THE BROWSER</p><h2 id="extension-heading">A little less scrolling.<br>A little more focus.</h2><p>Glance Focus blocks the websites you choose while your Pomodoro is running. Use it on its own, or pair with Glance so your Mac keeps the timer and settings in sync.</p><div class="actions"><a class="button primary" href="extension/">Explore the extension <span aria-hidden="true">↗</span></a><a class="text-link" href="extension/connect/">Connect your Mac ↗</a></div><p class="supporting">Chrome developer preview. No account required. Not on the Chrome Web Store yet.</p></div>
+      <div class="extension-benefits"><article><span class="feature-number">01 / STAY WITH IT</span><h3>Your websites can wait.</h3><p>Your block list follows focus sessions, with a quiet countdown when you reach a distracting site.</p></article><article><span class="feature-number">02 / ONE TIMER</span><h3>Your Mac leads.</h3><p>When paired, the app owns the timer and shared settings. Chrome follows its session and deadline.</p></article><article><span class="feature-number">03 / YOUR DATA</span><h3>Understand your time.</h3><p>Optional website usage insights, exclusions, export and delete controls. Activity stays local.</p></article></div>
+    </section>
+    <section class="principles wrap" id="principles"><div><p class="eyebrow">SMALL BY DESIGN</p><h2>Your attention is precious.<br><em>We treat it that way.</em></h2><p>One focused screen at a time. Quiet by default.<br>Choose what helps. Keep the rest out of your way.</p><a class="text-link" href="https://github.com/AKRISHNASRIKAR/Glance#why-this-project-exists">Read the philosophy ↗</a></div><div class="principle-list"><article><span>↗</span><div><h3>Your Mac. Your business.</h3><p>Activity analysis stays local. Spotify artwork can be fetched from its CDN. You decide which optional providers run.</p></div></article><article><span>＋</span><div><h3>Only what you choose.</h3><p>Add, reorder, or disable screens. Context awareness and coding activity are opt-in.</p></div></article><article><span>⌘</span><div><h3>Notch optional.</h3><p>On a display without a notch, Glance finds a compact home at the top center.</p></div></article></div></section>
     <section class="get-started wrap" id="install"><p class="eyebrow">A SMALL ADDITION. A NICER DAY.</p><h2>Meet your notch’s<br><em>new purpose.</em></h2><a class="button primary" href="https://github.com/AKRISHNASRIKAR/Glance/releases">Explore releases <span aria-hidden="true">↗</span></a><p>Download a DMG from GitHub Releases, or <a href="https://github.com/AKRISHNASRIKAR/Glance#build-from-source">build from source</a>.</p><small>Requires macOS Sonoma 14 or later.</small></section>
   </main>
-  <footer class="wrap"><a class="brand" href="#">glance<span class="brand-dot">.</span></a><span>Made for a more considered Mac.</span><div><a href="https://github.com/AKRISHNASRIKAR/Glance/blob/main/docs/PRIVACY.md">Privacy</a><a href="https://github.com/AKRISHNASRIKAR/Glance">Source ↗</a><a href="https://github.com/AKRISHNASRIKAR/Glance/blob/main/LICENSE">MIT License</a></div></footer>
+  <footer class="wrap"><a class="brand" href="#">glance<span class="brand-dot">.</span></a><span>Made for a more considered Mac.</span><div><a href="extension/">Browser extension</a><a href="extension/dashboard/">Dashboard</a><a href="https://github.com/AKRISHNASRIKAR/Glance/blob/main/docs/PRIVACY.md">Privacy</a><a href="https://github.com/AKRISHNASRIKAR/Glance">Source ↗</a><a href="https://github.com/AKRISHNASRIKAR/Glance/blob/main/LICENSE">MIT License</a></div></footer>
 </body>
 </html>

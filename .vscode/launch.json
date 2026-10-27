@@ -4,7 +4,7 @@
             "type": "swift",
             "request": "launch",
             "args": [],
-            "cwd": "${workspaceFolder:glance}",
+            "cwd": "${workspaceFolder}",
             "name": "Debug Glance",
             "target": "Glance",
             "configuration": "debug",
@@ -14,11 +14,51 @@
             "type": "swift",
             "request": "launch",
             "args": [],
-            "cwd": "${workspaceFolder:glance}",
+            "cwd": "${workspaceFolder}",
             "name": "Release Glance",
             "target": "Glance",
             "configuration": "release",
             "preLaunchTask": "swift: Build Release Glance"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "name": "Debug GlanceBrowserBridge",
+            "target": "GlanceBrowserBridge",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug GlanceBrowserBridge"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "name": "Release GlanceBrowserBridge",
+            "target": "GlanceBrowserBridge",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release GlanceBrowserBridge"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "name": "Debug GlanceBrowserHarness",
+            "target": "GlanceBrowserHarness",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug GlanceBrowserHarness"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "name": "Release GlanceBrowserHarness",
+            "target": "GlanceBrowserHarness",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release GlanceBrowserHarness"
         }
     ]
 }

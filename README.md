@@ -170,6 +170,14 @@ make app        # builds dist/Glance.app (ad-hoc signed)
 open dist/Glance.app
 ```
 
+## Browser Extension (Local Preview)
+
+Glance Focus adds standalone browser Pomodoro, domain blocking, optional local website usage statistics, and optional Native Messaging pairing with the Mac app. Load [`browser-extension/`](browser-extension/README.md) unpacked in Chrome. Pair from Glance Settings → Browser Focus. No account or backend is required.
+
+The website includes a visual extension overview at `/extension/` and a dedicated connection guide at `/extension/connect/`. During development, preview them with `python3 -m http.server 4173 --directory frontend`. The hosted dashboard is explicitly authorized from the installed extension; a plain localhost page cannot access native data.
+
+See the [local setup and test guide](browser-extension/README.md), [protocol](protocol/README.md), and [browser architecture](docs/BROWSER_EXTENSION.md). This is a development build, not a published Chrome Web Store release.
+
 ## Frontend Landing Page
 
 The standalone landing page lives in [`frontend/`](frontend/README.md), alongside the native app. Preview it without installing dependencies:
@@ -222,3 +230,7 @@ MIT — see [LICENSE](LICENSE).
 - Apple's public `NSScreen` safe-area APIs, which make honest notch geometry possible
 - The Claude Code team for documented, scriptable hooks
 - Every notch app that came before and showed what *not* to overdo
+
+## Repository maintenance
+
+See the [repository guide](docs/REPOSITORY_GUIDE.md) for source layout, generated assets, verification and public-file hygiene. Build outputs, browser profiles, credentials and video-production artifacts are excluded from version control.

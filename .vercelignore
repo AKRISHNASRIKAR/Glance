@@ -1,0 +1,16 @@
+# The Vercel project serves frontend/. Keep local/native files out of uploads.
+/.build/
+/dist/
+/node_modules/
+/browser-extension/
+/project-walkthrough/
+/Sources/
+/Tests/
+/Resources/
+/assets/
+/docs/
+/protocol/
+/scripts/
+/.github/
+/.vscode/
+/.env*

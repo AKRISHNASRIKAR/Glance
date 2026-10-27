@@ -1,43 +1,52 @@
-# Glance landing page
+# Glance website
 
-A standalone, responsive static website for Glance. No Node packages or build step required; the native Swift app remains independent.
+Static pages for the native Glance utility, extension setup, icon studies, and the authorized local-data dashboard. The landing page retains its earlier design at the user's request, with extension details added. The companion-page direction is recorded in `DESIGN.md`.
 
-## Preview
+## Local review
 
 From the repository root:
 
 ```sh
-python3 -m http.server 4173 --directory frontend
+python3 scripts/bundle-frontend.py
+python3 scripts/sync-extension-dashboard.py
+python3 -m http.server 4173 --bind 127.0.0.1 --directory frontend
 ```
 
-Open http://localhost:4173. You can also open `index.html` directly.
+Open `http://localhost:4173/`. No package install or native app rebuild is needed to review the website. The local dashboard intentionally shows its authorization gate: live native data is restricted to the production origin and packaged extension UI.
 
-## Deploy
+## Design sources
 
-Publish the `frontend/` directory with any static host. It contains the complete page and its local assets. No environment variables are required. Google Fonts is optional: system font fallbacks are provided when offline.
+- `design-system.css`: canonical website palette, type, spacing, shared navigation and controls.
+- `site-pages.css`: MacBook hero, product scenes and companion-page layouts.
+- `design-tokens.css`: generated compatibility token copy, not an editing source.
+- `navigation.js`: disclosure menu and keyboard dismissal.
+- `app.js`: the restored interactive landing preview, explicitly labelled as a browser-only demonstration.
+- `landing/`: original landing styles, including the MacBook, native preview and motion. `landing.css` is the generated landing bundle.
+- `icon-studies.css` and `icon-studies.js`: motion studies, explicit play/pause, and Reduce Motion defaults.
+- `site.css`: generated bundle of the canonical system and page layouts.
 
-The notch illustration is a labeled demo. Its controls demonstrate sample playback and a browser-local Pomodoro timer. They do not control the native app. Release and installation links point to the project's GitHub repository.
+The hero keeps a front-facing CSS MacBook at the user's request. Music, Pomodoro and optional activity scenes use actual app captures from `assets/screenshots/`, copied into the static asset directory. Captures are labelled as noninteractive images. No Apple product photograph, invented playback state or fake notification is used.
 
-## Device illustration
+The icon studies use the app's existing WebP artwork, the extension's actual outline SVG, and a raster of `Sources/Glance/Resources/MenuBarIcon.pdf`. Interface motion is limited to explicit state changes. Marketing scroll reveals, breathing halos, equalizer loops and animated headers have been removed.
 
-The hero uses an original CSS illustration inspired by the 13-inch M4 MacBook Air (2025), with a 13.6-inch display and a camera notch. Reference: [Apple product announcement](https://www.apple.com/newsroom/2025/03/apple-introduces-the-new-macbook-air-with-the-m4-chip-and-a-sky-blue-color/) and [technical specifications](https://support.apple.com/en-ie/122209). The illustration uses no third-party device image or 3D asset.
+## Extension surfaces
 
-## Native UI reference
+The extension owns its matching utility tokens in `browser-extension/ui.css`, with system fonts and no external font requests. Its blocked page keeps a separate stylesheet to protect its layout and single Manage list action. The updated palette is applied without changing that layout.
 
-The MacBook notch preview follows the current SwiftUI source: 480-point expanded width, a 32-point illustrated sensor row, 128-point content area, 22-point bottom corners, 82-point album artwork, centered transport controls, and the app’s chevron/dot pager. The selected examples are Now Playing (Artwork), Pomodoro (Classic), and Claude Code (needs-input state). Claude is optional in the app.
+Generate the hosted dashboard after extension UI changes with `python3 scripts/sync-extension-dashboard.py`. The hosted UI keeps Pomodoro configuration removed, following the direct product decision. Native and packaged settings retain those controls.
 
-`native-preview.css` maps native points to container-relative units. Match future app changes against `NotchGeometry.swift`, `NowPlayingScreenView.swift`, `PomodoroUIKit.swift`, `ClassicPomodoroRenderer.swift`, `ClaudeCodeScreenView.swift`, and `ExpandedContentView.swift`. The browser recreation uses equivalent web glyphs, not Apple SF Symbols; native rendering and browser rendering are not pixel-identical. Media artwork and track details come from the repository screenshot.
+## Checks and deployment
 
-## Motion
+Run `node browser-extension/tests/responsive.test.js` for five viewport sizes, enlarged text, keyboard navigation, media failure/retry, and reduced-motion controls. The native-bridge integration suite also checks the connected settings layout and app-owned state.
 
-`motion.css` adds section reveals, preview transitions, button feedback, and a breathing timer halo. The timer arc reflects elapsed demo time; pulsing represents a running state, not progress. Native Classic and Artwork Pomodoro use an 88-point ring and animated rounded numeric text. Site and native animations respect Reduce Motion, and timer breathing stops when paused.
+This revision is for local review. Do not deploy until the user approves it. The existing deployment helper remains `scripts/prepare-vercel-static.py` for the already-linked Vercel project.
 
-The hosted Pomodoro preview now matches the centered Classic layout, with full-notch sage/plum focus and blue/plum rest gradients. Claude uses a full-notch terracotta/plum background.
+## Extension marketing and discovery
 
-## Device illustration
+The original MacBook homepage stays in `landing/`. `/extension/` uses `extension.css` for the forest-green visual direction, real extension captures and upright serif headline. `/extension/connect/` has the detailed developer-preview pairing guide. `grain.css` places subtle tiled grain under content on website surfaces. The blocked timer layout is unchanged.
 
-The hero uses a responsive CSS MacBook illustration in `macbook-m4.css`, with a unified bezel, sage wallpaper, and interactive Glance preview. The Apple reference image remains in assets for design reference but is not rendered in the hero.
+Run `python3 scripts/sync-extension-dashboard.py` after editing extension UI. It also runs `scripts/site_metadata.py`, the single source of canonical URLs, Open Graph/Twitter cards, JSON-LD, robots, sitemap and LLM guides. Run `python3 scripts/check-site-metadata.py` to verify repeatable generation and local assets. The dashboard has `noindex, follow` and is excluded from the sitemap, but crawlers can read its noindex directive. LLM guides describe the project; they do not promise search ranking or indexing.
 
-## Frontend assets and CSS
+Social previews are reproducible with `node scripts/generate-social-previews.mjs` while the site runs at localhost:4173. The real Chrome/native demo captures can be regenerated with `node scripts/capture-extension-preview.mjs` after building the native bridge/harness; the script uses an isolated temporary profile and removes it afterwards. Install Playwright with `npm ci --prefix browser-extension` first. Neither capture script touches the user's normal Chrome profile.
 
-After editing any landing-page CSS source, run `python3 scripts/bundle-frontend.py` from the repository root to regenerate `site.css`. The header uses a 120-pixel WebP icon; the music preview uses compressed WebP with an early preload. Native app and README image assets retain their original resolution. `icon-lab.html` contains three optional animation studies with a pause control and Reduce Motion support.
+The static deployment preparer supports `/extension/connect/` with a trailing-slash redirect. Preparing output does not publish it. These changes are local for review.

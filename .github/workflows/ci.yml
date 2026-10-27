@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Build & Test
@@ -18,11 +21,29 @@ jobs:
       - name: Swift version
         run: swift --version
 
+      - name: Audit public files
+        run: python3 scripts/check-public-repo.py
+
+      - name: Website metadata
+        run: python3 scripts/check-site-metadata.py
+
+      - name: Extension policy tests
+        run: node --test browser-extension/tests/core.test.js
+
       - name: Build
         run: swift build
 
       - name: Test
         run: swift test
+
+      - name: Browser flows and responsive pages
+        run: |
+          cd browser-extension
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx playwright install chromium
+          node tests/responsive.test.js
+          node tests/blocked-page.test.js
+          node tests/browser.test.js
 
       - name: Build release + app bundle
         run: scripts/make-app.sh

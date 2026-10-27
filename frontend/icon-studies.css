@@ -1,0 +1,14 @@
+.icon-study-intro .page-heading{font-size:var(--section-title)}
+.icon-card h2{font-size:var(--card-title);line-height:1.25;letter-spacing:-.025em}
+.stack img{position:absolute;inset:0}.study-sprite{animation:none}.ghost,.outline-art,.menubar-art{opacity:0;pointer-events:none}
+.glitch .base{--study-animation:icon-shift 5s steps(1) infinite}.glitch .cyan{filter:drop-shadow(3px 0 var(--sage));clip-path:inset(25% 0 50%);--study-animation:icon-split 5s steps(1) infinite}.glitch .mint{filter:drop-shadow(-3px 0 var(--forest));clip-path:inset(65% 0 15%);--study-animation:icon-split 5s .08s steps(1) infinite}
+.morph .base{--study-animation:icon-fade 6s ease-in-out infinite}.morph .outline-art{--study-animation:outline-show 6s ease-in-out infinite}
+.menubar .base{--study-animation:icon-shrink 7s ease-in-out infinite}.menubar .menubar-art{inset:25%;width:50%;height:50%;--study-animation:mark-show 7s ease-in-out infinite}
+body.motion-playing .study-sprite{animation:var(--study-animation)!important}
+body.motion-paused .study-sprite{animation:none!important}.motion-paused .base{opacity:1;transform:none}.motion-paused .ghost,.motion-paused .outline-art,.motion-paused .menubar-art{opacity:0}
+@keyframes icon-shift{0%,68%,84%,100%{transform:none}70%{transform:translateX(-3px)}73%{transform:translateX(3px)}76%{transform:translateX(-2px)}80%{transform:none}}
+@keyframes icon-split{0%,68%,84%,100%{opacity:0;transform:none}70%,76%{opacity:.7;transform:translateX(4px)}73%,80%{opacity:.7;transform:translateX(-4px)}}
+@keyframes icon-fade{0%,20%,90%,100%{opacity:1;transform:scale(1)}40%,70%{opacity:0;transform:scale(.94)}}
+@keyframes outline-show{0%,20%,90%,100%{opacity:0;transform:scale(.94)}40%,70%{opacity:1;transform:scale(1)}}
+@keyframes icon-shrink{0%,20%,90%,100%{transform:none;opacity:1}40%,70%{transform:scale(.3);opacity:0}}
+@keyframes mark-show{0%,25%,85%,100%{opacity:0;transform:scale(.5)}45%,65%{opacity:1;transform:scale(1)}}

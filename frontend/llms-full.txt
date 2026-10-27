@@ -1,0 +1,41 @@
+# Glance
+
+> An open-source macOS notch app with music controls, Pomodoro and optional context. Glance Focus is its local-first Chrome companion.
+
+## Product pages
+- [Glance for Mac](https://glance-notch.vercel.app/): Main app, interactive MacBook demonstration and downloads.
+- [Glance Focus](https://glance-notch.vercel.app/extension/): Website blocking, optional usage stats and standalone focus timer.
+- [Connection guide](https://glance-notch.vercel.app/extension/connect/): Developer preview installation, native pairing and troubleshooting.
+
+## Source and policies
+- [Source repository](https://github.com/AKRISHNASRIKAR/Glance): MIT-licensed Swift macOS app, static website and Chrome extension in one repository.
+- [Privacy](https://github.com/AKRISHNASRIKAR/Glance/blob/main/docs/PRIVACY.md): Local storage, optional tracking, permissions and network traffic.
+- [Extension architecture](https://github.com/AKRISHNASRIKAR/Glance/blob/main/docs/BROWSER_EXTENSION.md): Timer ownership, bridge and testing.
+- [Security reporting](https://github.com/AKRISHNASRIKAR/Glance/blob/main/SECURITY.md): Private vulnerability reporting instructions.
+
+## Status and boundaries
+The extension is a developer preview, not a published Chrome Web Store listing. It needs no account. When paired, the Mac owns the timer and shared settings. Without the app, a standalone browser timer is available. The hosted dashboard requires explicit authorization from the extension; it is not a cloud account or backend. Website usage tracking is optional and domain-level; activity is retained locally for 30 days. There is no activity upload service. Marketing screenshots are labelled captures or demonstrations, not live user data.
+
+## More detail
+
+# Browser focus
+
+Glance Focus is a Manifest V3 Chrome extension in `browser-extension/`. It supports independent focus sessions and an optional local connection to Glance on macOS. It is a developer preview, not a published Chrome Web Store listing.
+
+## Ownership and persistence
+
+When connected, the Mac owns the phase, run state, deadline, Pomodoro settings, block list, exclusions and desired usage-tracking state. Chrome adopts that state and sends acknowledged commands. Browser Start does not overwrite the Mac duration. While disconnected, the extension preserves the last known deadline and retries; explicitly choosing standalone enables independent browser operation.
+
+The existing native SettingsStore persists Pomodoro settings. Browser preferences and imported statistics live in the Mac's Application Support folder with user-only permissions. Chrome keeps a local cache, event journal and its own permission grants. Permission grants cannot be shared between browser profiles. Stats imports are acknowledged and deduplicated.
+
+## Dashboard
+
+The hosted `/extension/dashboard/` page is a control surface for local data. It connects only after the user selects Open web dashboard in the extension. Chrome forwards allowlisted commands to the extension; the extension uses Native Messaging to reach the app. The website does not store an independent timer or upload activity. Access can be revoked in packaged extension settings.
+
+Native Messaging credentials, socket paths and browser profiles are runtime data, never repository assets. The development key in `protocol/development.json` is a public key used to stabilize the unpacked extension ID, not a private credential.
+
+## Development
+
+See the [extension guide](../browser-extension/README.md) for local loading, pairing and tests, and the [protocol](../protocol/README.md) for request schemas. Website tokens live in `frontend/design-system.css` and extension-owned tokens live in `browser-extension/ui.css`; regenerate the landing bundle and hosted dashboard after changes. The blocked page intentionally retains its own layout stylesheet.
+
+Before release, complete signing/notarization, Chrome Web Store packaging/review, permission-prompt testing and broader browser/OS beta coverage. The test harness is never shipped inside Glance.app.

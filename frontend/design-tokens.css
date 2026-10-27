@@ -1,0 +1,9 @@
+/* Generated from design-system.css. */
+:root{
+  --paper:#F8F9F5;--ink:#19251F;--muted:#53645B;--forest:#274835;--sage:#E4ECE3;--line:#D7DFD6;--white:#FFFFFF;--error:#8A3C36;--device-metal-light:#E2E7E0;--device-metal-dark:#A9B3AA;
+  --green:var(--forest);--surface:var(--sage);--green-hover:var(--ink);--focus:var(--forest);--warning-surface:var(--sage);--warning-ink:var(--ink);
+  --font-body:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--font-heading:Manrope,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --label:.75rem;--small:.875rem;--body:1rem;--card-title:1.25rem;--section-title:clamp(2rem,3.5vw,2.5rem);
+  --s1:.25rem;--s2:.5rem;--s3:.75rem;--s4:1rem;--s6:1.5rem;--s8:2rem;--s12:3rem;--s16:4rem;--s24:6rem;
+  --radius-small:.5rem;--radius:1rem;--pill:99rem;
+}

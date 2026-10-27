@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Time to focus | Glance</title>
+  <meta name="description" content="A little room for focus. Your session countdown, without distractions.">
+  <link rel="icon" href="icons/outline-48.png">
+  <link rel="stylesheet" href="blocked.css">
+  <script type="module" src="src/blocked.js"></script>
+</head>
+<body data-page="blocked">
+  <main class="focus-page">
+    <header class="focus-brand"><span>Glance</span></header>
+    <section class="focus-center" aria-labelledby="message">
+      <h1 id="message" class="focus-label">Getting your session</h1>
+      <div id="time" class="focus-countdown" role="timer" aria-label="Time remaining" aria-live="off">--:--</div>
+      <p id="domain" class="focus-domain"></p>
+      <p id="feedback" class="focus-feedback" role="status" aria-live="polite" hidden></p>
+    </section>
+    <footer class="focus-footer"><a id="manage" class="focus-manage" href="options.html">Manage list <span aria-hidden="true">↗</span></a></footer>
+  </main>
+</body>
+</html>

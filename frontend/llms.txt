@@ -1,0 +1,17 @@
+# Glance
+
+> An open-source macOS notch app with music controls, Pomodoro and optional context. Glance Focus is its local-first Chrome companion.
+
+## Product pages
+- [Glance for Mac](https://glance-notch.vercel.app/): Main app, interactive MacBook demonstration and downloads.
+- [Glance Focus](https://glance-notch.vercel.app/extension/): Website blocking, optional usage stats and standalone focus timer.
+- [Connection guide](https://glance-notch.vercel.app/extension/connect/): Developer preview installation, native pairing and troubleshooting.
+
+## Source and policies
+- [Source repository](https://github.com/AKRISHNASRIKAR/Glance): MIT-licensed Swift macOS app, static website and Chrome extension in one repository.
+- [Privacy](https://github.com/AKRISHNASRIKAR/Glance/blob/main/docs/PRIVACY.md): Local storage, optional tracking, permissions and network traffic.
+- [Extension architecture](https://github.com/AKRISHNASRIKAR/Glance/blob/main/docs/BROWSER_EXTENSION.md): Timer ownership, bridge and testing.
+- [Security reporting](https://github.com/AKRISHNASRIKAR/Glance/blob/main/SECURITY.md): Private vulnerability reporting instructions.
+
+## Status and boundaries
+The extension is a developer preview, not a published Chrome Web Store listing. It needs no account. When paired, the Mac owns the timer and shared settings. Without the app, a standalone browser timer is available. The hosted dashboard requires explicit authorization from the extension; it is not a cloud account or backend. Website usage tracking is optional and domain-level; activity is retained locally for 30 days. There is no activity upload service. Marketing screenshots are labelled captures or demonstrations, not live user data.
