@@ -11,6 +11,15 @@ final class NotchPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { false }
 
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        // This nonactivating panel can be key while another app is active.
+        // Route only events delivered to this panel through Glance's menu.
+        if NSApp.mainMenu?.performKeyEquivalent(with: event) == true {
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+
     override func keyDown(with event: NSEvent) {
         if viewModel?.handleKeyDown(event) != true {
             super.keyDown(with: event)
@@ -118,7 +127,9 @@ final class NotchWindowController {
         panel.hidesOnDeactivate = false
         panel.isMovable = false
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
-        panel.becomesKeyOnlyIfNeeded = true
+        // An explicit click must give the panel keyboard focus so shortcuts
+        // work. Hover still leaves focus with the user's current application.
+        panel.becomesKeyOnlyIfNeeded = false
 
         // Each provider/engine is injected directly: nested ObservableObjects
         // do not republish through the coordinator, so views must observe
